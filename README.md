@@ -1,6 +1,5 @@
 # Telara
-
-> A unified manufacturing operations platform built on Theory of Constraints principles, making station, equipment, and product telemetry visible in real time across every layer of the organization.
+A unified manufacturing operations platform built on Theory of Constraints principles, making station, equipment, and product telemetry visible in real time across every layer of the organization.
 
 ---
 
