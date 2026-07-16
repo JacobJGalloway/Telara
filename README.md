@@ -1,168 +1,76 @@
-# Telara
+# Telara 
 A unified manufacturing operations platform built on Theory of Constraints principles, making station, equipment, and product telemetry visible in real time across every layer of the organization.
 
 ---
 
-## Tech Stack
+# Technology and Architecture Stack
 
-*From data layer up:*
+- SQL Server 2025 Express (Azure once funding gets into play) - CQRS implemented from the start
+- .NET 10 C# micro-services with Entity Framework Core (repository & UoW patterns in use)
+- AI Abstraction Interface/Adapter pattern to interface the main .NET codebase to AI model operations — connectors to Analytics & AI reasoning layer (Phase 3 constraint analysis, RAG-based recommendation engine, AI-assisted bottleneck identification)
+- Java/Spring - Escalation and Notification communications domain service (best suited libraries tied to this language)
+- GraphQL with Hot Chocolate Library (domain contract layer between front-end and back-end to support tighter data requests from cross-platform frontend interfaces, including the potential for public facing APIs)
+- Claude Sonnet 5 - base AI model for single and multiple Agent workflows.
+- Microsoft Agent Framework - AI Agent/Tool orchestration and management
+- Blazor - Server-first UI layer handling routing, styling, and page layouts as MVC islands, supporting progressive static page application patterns with real-time SignalR integration for telemetry and monitoring surfaces
+- Island Architecture - This will generate the system as a series of .NET 10 services, Java/Springboot services, and ASP.NET Core Web API and Frontend islands for exposing the system's endpoint interface as well as individual islands 
+                        based on platform support, allowing for future cross-platform display and interaction (mobile, watch, tablet, laptop/desktop, etc.)
 
-- **SQL Server 2025 Express** *(Azure once funding gets into play)* — CQRS implemented from the start
-- **.NET 10 C# Microservices with Entity Framework Core** — repository & Unit of Work patterns in use
-- **GraphQL with Hot Chocolate Library** — domain contract layer between front-end and back-end to support tighter data requests from cross-platform frontend interfaces, including the potential for public-facing APIs
-- **Astro** *(content-driven web framework)* — used to define a server-first UI routing, styling, and page layouts for static and interactive components utilizing Islands architecture; rendering the majority of the page to fast, static HTML with smaller "islands" of JavaScript added when interactivity or personalization is needed
-- **React 19.2** *(with noted potential for Svelte 5.55.7 component creation or changeout at the island level)* — primary frontend component codebase
+## Base Orchestration to MCP Server(s) managing tools and Agents
 
----
+This system architecture has systematically eliminated the most common failure points in enterprise AI engineering: it stops agent prompt bloat by moving rules into compiled .NET microservices. Context window dilution is prevented by using SQL Server Express data slices instead of massive NoSQL dumps. Complex asynchronous state management is eliminated by replacing custom loops with Microsoft Agent Framework. Compute costs are optimized by using linear GenAI for high-volume manufacturing telemetry and saving Autonomous Agents for real bottleneck logic.
 
-## The Need Scenario
+                    ┌─────────────────────────────────────────────┐
+                    │                 User Input                  │
+                    └────────────────────┬────────────────────────┘
+                                         │
+                  ┌──────────────────────┴────────────────────────┐
+                  │  .NET Agent Framework ORCHESTRATION LAYER     │
+                  │            (Top-level Orchestrator)           │
+                  └────────────────────┬──────────────────────────┘
+                                       │
+         ┌─────────────────────────────┴─────────────────────────────┐
+         │ (JSON-RPC over network)                                   │
+         ▼                                                           ▼
+┌─────────────────────────────────┐                 ┌──────────────────────────────────────┐
+│     .NET MCP SERVER A           │                 │          .NET MCP SERVER B           │
+│   (Linear Station Processes)    │                 │   (Heavy Math Calculations/Analysis) │
+├─────────────────────────────────┤                 ├──────────────────────────────────────┤
+│ SCALE: Auto-scales to 100 pods  │                 │ SCALE: Stays idle at 1 pod           │
+│ during peak ingestion hours     │                 │ until a factory bottleneck hits      │
+└─────────────────────────────────┘                 └──────────────────────────────────────┘
 
-### The Fragmented Data Problem
+# Planned Domains
 
-Manufacturing operations have always generated data — but rarely in one place, rarely in one format, and rarely with anyone accountable for making it coherent. The result is a kind of data debt that accumulates the same way paperwork does: one folder stacked on top of a filing cabinet at a time with the quiet promise of "I'll file it later" that never quite arrives.
+Telara's initial implementation is organized around six core service domains, each independently deployable and scoped to a distinct operational concern. Domain boundaries will be refined during MVP planning but the following represents the intended service landscape at day zero.
 
-The practical reality on most floors is that data sources span an enormous range — from IoT sensor streams and ERP system exports at one end, to CSV files on a schedule nobody remembers agreeing to, Access databases someone built in 1998, handwritten shift logs, triplicate carbon copies, and punch card tally marks on old card stock at the other. Every one of those sources represents real operational knowledge. None of them talk to each other.
-
-Telara addresses this at the intake layer with a set of ingestion services designed to meet existing data sources where they are — automated file reads, direct system integration where available, and form-based manual entry as a bridge for lower frequency or analog sources while trust in the digital system builds. No data source gets left behind simply because it isn't modern.
-
-Above the ingestion layer sits a monitoring service that watches for expected data flow and flags when a source goes quiet beyond its normal output window. Any silence that persists triggers a notification and escalation policy that starts at the station or section level and works outward until the gap is resolved.
-
-The goal isn't to replace the punch card on day one — it's to make sure the knowledge it captures finds its way into a system where it can finally talk to everything else. Unified discipline tends to follow a unified system naturally, especially when the system meets people where they already are. The operator who's been tallying marks on card stock for thirty years isn't looking for a revolution — just a spacebar that does the same job with less friction at the end of a shift.
-
----
-
-### The Late Discovery Problem
-
-There are few moments more expensive in manufacturing than discovering a defect at the loading dock. By that point the part has consumed every station, every labor hour, and every material between its origin and the bay door — and all of it now has to be accounted for as waste.
-
-The root cause is almost never the loading dock. It's a station upstream that had no reliable way to surface what it already knew.
-
-Telara approaches defect resolution the same way a development team approaches a bug — trace it to its origin, understand the conditions that produced it, and close the loop so the same conditions don't produce it again. The principles are identical. The implementation just trades stack traces for sensor readings and replaces the debugger with the floor.
-
-Detection starts at the data source closest to where the defect originated — station telemetry, equipment readings, or operator reported flags — and works outward from there. Once a defect is captured, the same notification and escalation model from the ingestion layer applies: the right people know about it at the right level without it having to travel all the way to the loading dock to announce itself.
-
----
-
-### The Theory of Constraints Approach
-
-A manufacturing floor that can't see its own bottlenecks can't fix them. It can only react to them — usually after they've already cost a shift, a batch, or a delivery commitment.
-
-Eliyahu Goldratt's Theory of Constraints gives us the diagnostic lens: the throughput of any system is determined not by its fastest station but by its slowest one. Everything upstream of that constraint is building inventory that can't move. Running those stations faster doesn't help — it just creates a larger pile in front of the bottleneck. The goal isn't maximum speed at every station. It's finding your Herbie and putting him at the front of the line.
-
-Telara makes that possible by monitoring stations for two observable symptoms of a hidden constraint — **inventory backlog**, where a station sits idle waiting on upstream parts before it can work, and **inventory surplus**, where a station ends a shift with parts that downstream stations couldn't consume within that workflow cycle.
-
-The diagnosis is straightforward: a backlog means Herbie is upstream of you. A surplus means Herbie is downstream of you. If neither condition is present at your station — you're probably Herbie, and your floor doesn't know it yet.
-
-Being Herbie isn't automatically a problem. A floor that's meeting or exceeding expectations with a known constraint is a floor that understands itself. Herbie simply defines where you start fine tuning when something begins to drift — before the drift becomes a loading dock conversation.
-
-Either condition alone is worth investigating. Together they draw a precise map of where station synchronization is breaking down and where to start when performance does start to slip.
-
-Where station dependencies allow it, concurrent station workflows are supported — parallel processing where the assembly sequence permits it, without forcing synchronization where none is needed.
-
-Once monitoring has established a reliable data foundation, Telara's analytics layer introduces AI-assisted reasoning to help surface possible solutions — redistributing resources from upstream stations, identifying candidates for additional capacity, or resequencing processes to reduce constraint exposure. This is where the system moves from observation to recommendation.
-
-That reasoning layer will be carefully configured with defined confidence thresholds and guardrails to keep suggestions grounded in operational reality. The goal is actionable insight — not a recommendation to quadruple the size of the facility.
-
----
-
-### The "Wasn't Worth It" Gap
-
-In 2006 the math was reasonable. Industrial sensors carried significant hardware costs, installation required specialized expertise, and the infrastructure to collect, store, and act on that data in real time didn't exist at a price point most plant floors could justify. "It isn't worth it" wasn't negligence — it was an honest calculation made with the information and tools available at the time.
-
-The problem is that calculation was never revisited while the numbers quietly changed around it.
-
-The IoT sensor market of 2026 looks almost nothing like 2006. Modular sensor hardware — including Arduino-based devices purpose built for industrial monitoring — has brought both the entry cost and the technical barrier down to a point where the conversation has fundamentally changed. Sensors that would have required capital expenditure approval now fit in a project budget. Connectivity and edge computing infrastructure that didn't exist then is ambient now.
-
-The real cost comparison was never sensor hardware vs nothing. It was always **sensor hardware vs the cost of not knowing.** A single batch rejected at the loading dock — after consuming every station, every labor hour, and every material between its origin and the bay door — frequently exceeds the entire cost of the monitoring that would have caught it at the source.
-
-Telara exists in part to make that recalculation visible. The math changed. The decision doesn't have to stay the same.
-
----
-
-## Architectural Philosophy
-
-Telara is not a stack chosen for its current popularity. Every layer reflects a deliberate and consistent philosophy: that no decision made today should become an unmovable ceiling tomorrow. Independence, replaceability, and visibility are not features of Telara — they are the principles its architecture is built to express at every layer.
-
-That philosophy starts at the browser and holds all the way down to the database.
-
-### The Front-End is the Most Disposable Layer — By Design
-
-User expectations change faster than business logic. A manufacturing floor's core processes outlast any particular UI framework by years. Telara's front-end is built on Astro's islands architecture precisely because it treats the UI as a collection of independently replaceable units rather than a monolithic surface that lives or dies as one.
-
-Each island is responsible for its own rendering, its own hydration, and its own framework choice. A station telemetry island built in React today can be replaced with a Svelte component tomorrow without touching the islands beside it, the page layout around it, or anything below the GraphQL layer. The rest of the system doesn't notice. That's not an accident — it's the point.
-
-The majority of the page renders as fast, static HTML. Interactivity is added precisely where it's needed and no further. The front-end earns its complexity rather than assuming it.
-
-### The Contract Layer is What Makes Replaceability Possible
-
-Islands architecture at the front-end only delivers on its promise if the layer below it is stable enough to absorb change without flinching. That's the job GraphQL and Hot Chocolate perform in Telara's stack.
-
-The GraphQL schema is the contract between every consumer of Telara's data — browser islands, mobile interfaces, and potential public-facing APIs — and the services that produce it. A consumer requests exactly the data it needs and nothing more. The schema evolves without breaking existing consumers. New surfaces can be added without renegotiating the contract from scratch.
-
-This is why the front-end can be replaced without touching the back-end. The contract holds regardless of what's on either side of it.
-
-### The Services Layer Reflects the Floor It Models
-
-A manufacturing floor doesn't shut down to update one station. Neither should Telara's services.
-
-Telara's C# microservices are independently deployable by design — each service owns its domain, its data, and its deployment lifecycle. Equipment monitoring doesn't wait on personnel scheduling. Production tracking doesn't share a release cycle with analytics. The same principle that puts Herbie at the front of the line applies to the services layer: find the dependency that's slowing everything down and remove it.
-
-Where a full microservices boundary is appropriate it is honored. Where a service-oriented approach better fits the domain it is used instead. The architecture follows the problem rather than enforcing a pattern for its own sake.
-
-### The Data Layer is Stable Without Being Immovable
-
-Most systems treat the database as the one layer that can never change without a painful and expensive migration conversation. Telara's data layer is built on a different assumption.
-
-EF Core's domain models sit between the C# microservices and the underlying database engine — and that boundary is intentional. The domain model is the truth. The database schema follows the domain through code-first migrations rather than the domain being imprisoned by an existing schema. A client running SQL Server Express today can migrate to Azure SQL when scale justifies it. A deployment with a unique data topology can be accommodated at the EF Core configuration level without forking the services above it.
-
-The data layer is stable by default. It is not immovable by design.
-
-### The Philosophy in One Line
-
-> Every layer of Telara is independently evolvable — from the island on the browser to the schema in the database — because the constraints of today should never become the ceilings of tomorrow.
-
----
-
-## Planned Domains
-
-Telara's initial implementation is organized around five core service domains, each independently deployable and scoped to a distinct operational concern. Domain boundaries will be refined during MVP planning but the following represents the intended service landscape at day zero.
-
-### Equipment & Sensor Monitoring
+## Equipment & Sensor Monitoring
 Real-time telemetry from station and equipment sensors, anomaly detection, health status tracking, and alert generation. The layer that makes the invisible visible at the hardware level — encoding the kind of tribal knowledge that currently walks out the door when an experienced technician retires.
 
-### Production & Product Tracking
+## Production & Product Tracking
 Throughput monitoring, defect capture and tracing, order status, and batch lifecycle tracking. Defects are treated as bugs — traced to their origin, resolved at the source, and closed out so the same conditions don't produce the same result at the next shift or the next batch.
 
-### Station Management
+## Station Management
 Station configuration, sensor assignments, threshold definitions, and concurrent workflow support where station dependencies allow it. The layer that knows how the floor is arranged, what each station is expected to produce, and where inventory backlog or surplus conditions are beginning to form.
-
-### Personnel & Scheduling
+## Personnel & Scheduling
 Shift management, shift station assignment, and role-based access. Maintains operational awareness of resource distribution across the floor to support constraint resolution and situational or seasonal reassignment. The supervisor's job is managing people holistically — Telara's job is giving them the floor context to do that well, not replacing that judgment with a compliance report.
 
-### Analytics & Reporting
+## Analytics & Reporting
 The multi-layer view that surfaces the right data to the right role — floor worker, supervisor, plant manager, or executive — without requiring any of them to know how to write a stored procedure to get it. Each role sees the surface they need without the noise the others generate.
 
----
+## Escalation & Notification
+Delivers alerts to their initial recipient list and escalates beyond it when a threshold is crossed without acknowledgment or resolution — widening from station-level to supervisor to plant-manager as needed, rather than simply re-notifying the original list. Isolated from the core .NET services by design; deliberately scoped as a contained domain to re-establish Java/Spring fluency ahead of Mosaic's larger Java footprint.
 
-## Roadmap
+# Roadmap
 
 Telara is designed to grow without outgrowing its architecture. Each phase is independently demoable and independently researchable — feedback doesn't wait for the full system to be complete.
-
-### Phase 1 — MVP
+Phase 1 — MVP
 Core telemetry, station monitoring, and dashboard functionality with time-relative seeded demo data. The floor is visible. Herbie can be found.
-
-### Phase 2 — Internal Beta
+Phase 2 — Internal Beta
 Controlled release to domain-knowledgeable testers. Feedback collected against real operational intuition rather than developer assumptions. Backlog refined from what's actually missing rather than what was guessed at.
-
-### Phase 3 — Feedback-Driven Expansion
+Phase 3 — Feedback-Driven Expansion
 Backlog priorities driven by beta feedback. Analytics and AI-assisted constraint reasoning introduced as the data foundation matures enough to support it.
-
-### Phase 4 — Facility-Wide Footprint
+Phase 4 — Facility-Wide Footprint
 Expansion beyond the production floor into inventory, energy monitoring, environmental conditions, safety compliance, and emergency response coordination. Telara's name was chosen to hold this scope from day one.
-
-### Phase 5 — Enterprise & Multi-Facility
+Phase 5 — Enterprise & Multi-Facility
 Multi-facility coordination, public-facing API exposure, and client-specific data layer configuration. The architecture was built for this conversation — it just doesn't need to have it yet.
-
----
-
-*Telara — making the invisible visible, one layer at a time.*
