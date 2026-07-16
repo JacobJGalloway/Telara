@@ -7,18 +7,25 @@ A unified manufacturing operations platform built on Theory of Constraints princ
 
 - SQL Server 2025 Express (Azure once funding gets into play) - CQRS implemented from the start
 - .NET 10 C# micro-services with Entity Framework Core (repository & UoW patterns in use)
-- AI Abstraction Interface/Adapter pattern to interface the main .NET codebase to AI model operations — connectors to Analytics & AI reasoning layer (Phase 3 constraint analysis, RAG-based recommendation engine, AI-assisted bottleneck identification)
+- AI Abstraction Interface/Adapter pattern to interface the main .NET codebase to AI model operations — connectors to Analytics & AI 
+  reasoning layer (Phase 3 constraint analysis, RAG-based recommendation engine, AI-assisted bottleneck identification)
 - Java/Spring - Escalation and Notification communications domain service (best suited libraries tied to this language)
-- GraphQL with Hot Chocolate Library (domain contract layer between front-end and back-end to support tighter data requests from cross-platform frontend interfaces, including the potential for public facing APIs)
+- GraphQL with Hot Chocolate Library (domain contract layer between front-end and back-end to support tighter data requests from cross-
+  platform frontend interfaces, including the potential for public facing APIs)
 - Claude Sonnet 5 - base AI model for single and multiple Agent workflows.
 - Microsoft Agent Framework - AI Agent/Tool orchestration and management
-- Blazor - Server-first UI layer handling routing, styling, and page layouts as MVC islands, supporting progressive static page application patterns with real-time SignalR integration for telemetry and monitoring surfaces
-- Island Architecture - This will generate the system as a series of .NET 10 services, Java/Springboot services, and ASP.NET Core Web API and Frontend islands for exposing the system's endpoint interface as well as individual islands 
-                        based on platform support, allowing for future cross-platform display and interaction (mobile, watch, tablet, laptop/desktop, etc.)
+- Blazor - Server-first UI layer handling routing, styling, and page layouts as MVC islands, supporting progressive static page    
+  application patterns with real-time SignalR integration for telemetry and monitoring surfaces
+- Island Architecture - This will generate  individual islands based on existing platform operations and support, while allowing for 
+  future cross-platform display and interaction (mobile, watch, tablet, laptop/desktop, etc.)
 
 ## Base Orchestration to MCP Server(s) managing tools and Agents
 
-This system architecture has systematically eliminated the most common failure points in enterprise AI engineering: it stops agent prompt bloat by moving rules into compiled .NET microservices. Context window dilution is prevented by using SQL Server Express data slices instead of massive NoSQL dumps. Complex asynchronous state management is eliminated by replacing custom loops with Microsoft Agent Framework. Compute costs are optimized by using linear GenAI for high-volume manufacturing telemetry and saving Autonomous Agents for real bottleneck logic.
+This system architecture is designed to eliminate the most common failure points in enterprise AI engineering — addressing agent prompt 
+bloat by moving rules into compiled .NET microservices, preventing context window dilution by using SQL Server Express data slices 
+instead of massive data store dumps, eliminating complex asynchronous state management and custom loop handling through the Microsoft 
+Agent Framework, and optimizing compute costs by reserving linear GenAI for high-volume manufacturing telemetry while saving Autonomous 
+Agents for real bottleneck logic.
 
                     ┌─────────────────────────────────────────────┐
                     │                 User Input                  │

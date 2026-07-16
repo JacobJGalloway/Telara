@@ -2,30 +2,33 @@
 
 Telara is not a stack chosen for its current popularity. Every layer reflects a deliberate and consistent philosophy: that no decision made today should become an unmovable ceiling tomorrow. Independence, replaceability, and visibility are not features of Telara — they are the principles its architecture is built to express at every layer.
 That philosophy starts at the browser and holds all the way down to the database.
-The Front-End is the Most Disposable Layer — By Design
-User expectations change faster than business logic. A manufacturing floor's core processes outlast any particular UI framework by years. Telara's front-end is built on Astro's islands architecture precisely because it treats the UI as a collection of independently replaceable units rather than a monolithic surface that lives or dies as one.
-Each island is responsible for its own rendering, its own hydration, and its own framework choice. A station telemetry island built in a Blazor-based frontend today can be replaced with a React-based component frontend tomorrow without touching the islands beside it, the page layout around it, or anything below the GraphQL layer. The rest of the system doesn't notice. That's not an accident — it's the point.
-The majority of the page renders as fast, static HTML. Interactivity is added precisely where it's needed and no further. The front-end earns its complexity rather than assuming it.
-The Contract Layer is What Makes Replaceability Possible
-Islands architecture at the front-end only delivers on its promise if the layer below it is stable enough to absorb change without flinching. That's the job GraphQL and Hot Chocolate perform in Telara's stack.
-The GraphQL schema is the contract between every consumer of Telara's data — browser islands, mobile interfaces, and potential public-facing APIs — and the services that produce it. A consumer requests exactly the data it needs and nothing more. The schema evolves without breaking existing consumers. New surfaces can be added without renegotiating the contract from scratch.
+
+## The Front-End is the Most Disposable Layer — By Design
+Each island is responsible for its own rendering, its own hydration, and its own framework choice. An island in Telara is any independently deployable, self-initializing unit — the pattern applies uniformly whether that unit renders UI in the browser or runs as a backend service. What loads onto a given island is defined by that island's own initialization script, not by a central switchboard deciding for it.
+Today, island assignment is platform-scoped: a Blazor-based island serves laptop and desktop clients, while a React Native-based island serves mobile. If a newer cross-platform technology — MAUI, for instance — becomes the better fit down the line, the upgrade path doesn't require a disruptive cutover. The new island runs in parallel with the one it's replacing, and accounts shift over gradually rather than all at once; the old island sunsets only once the new one has proven itself in production. The end user doesn't need to know a migration happened at all — at most, they notice their experience got better when their account redirects to the new island.
+Because island assignment can be keyed on more than platform alone, this same mechanism supports two distinct purposes: phased, risk-managed rollout of a replacement technology — canary-style, ending in full cutover once proven — and live A/B comparison between competing implementations, where the goal isn't replacement but measuring which one actually performs better. Today that key is platform alone; extending it into a compound key (platform plus rollout cohort, or platform plus test group) is a small addition rather than a redesign.
+
+## The Contract Layer is What Makes Replaceability Possible
+Islands architecture at the front-end only delivers on its promise if the layer below it is stable enough to absorb change without flinching. That's the job GraphQL and Hot Chocolate perform in Telara's stack. The GraphQL schema is the contract between every consumer of Telara's data — browser islands, mobile interfaces, and potential public-facing APIs — and the services that produce it. A consumer requests exactly the data it needs and nothing more. The schema evolves without breaking existing consumers. New surfaces can be added without renegotiating the contract from scratch.
 This is why the front-end can be replaced without touching the back-end. The contract holds regardless of what's on either side of it.
-The Services Layer Reflects the Floor It Models 
+
+## The Services Layer Reflects the Floor It Models 
 A manufacturing floor doesn't shut down to update one station. Neither should Telara's services.
 Telara's C# microservices are independently deployable by design — each service owns its domain, its data, and its deployment lifecycle. Equipment monitoring doesn't wait on personnel scheduling. Production tracking doesn't share a release cycle with analytics. The same principle that puts Herbie at the front of the line applies to the services layer: find the dependency that's slowing everything down and remove it.
 Where a full microservices boundary is appropriate it is honored. Where a service-oriented approach better fits the domain it is used instead. The architecture follows the problem rather than enforcing a pattern for its own sake.
-The Data Layer is Stable Without Being Immovable
-Most systems treat the database as the one layer that can never change without a painful and expensive migration conversation. Telara's data layer is built on a different assumption.
-EF Core's domain models sit between the C# microservices and the underlying database engine — and that boundary is intentional. The domain model is the truth. The database schema follows the domain through code-first migrations rather than the domain being imprisoned by an existing schema. A client running SQL Server Express today can migrate to Azure SQL when scale justifies it. A deployment with a unique data topology can be accommodated at the EF Core configuration level without forking the services above it.
+
+## The Data Layer is Stable Without Being Immovable
+Most systems treat the database as the one layer that can never change without a painful and expensive migration conversation. Telara's data layer is built on a different assumption. EF Core's domain models sit between the C# microservices and the underlying database engine — and that boundary is intentional. The domain model is the truth. The database schema follows the domain through code-first migrations rather than the domain being imprisoned by an existing schema. A client running SQL Server Express today can migrate to Azure SQL when scale justifies it. A deployment with a unique data topology can be accommodated at the EF Core configuration level without forking the services above it.
 The data layer is stable by default. It is not immovable by design.
-Technology Evolution leads to domain updates
-As different technologies and programming languages evolve, certain specialties and key features will make any given technology or programming language the right choice given the proper context. The architecture is being setup for 
-this to occur initially at a small-scale within the system (isolated service set or domain). If proven out, and testing shows the integration technique can be scaled up to production/enterprise levels, then we would audit the existing workflows for possible refactoring of those workflows, and proceed to perform an update refactor where appropriate without disrupting the system as a whole.
-The Philosophy in One Line:
+
+## Technology Evolution leads to domain updates
+As different technologies and programming languages evolve, certain specialties and key features will make any given technology or programming language the right choice given the proper context. The architecture is being setup for this to occur initially at a small-scale within the system (isolated service set or domain). If proven out, and testing shows the integration technique can be scaled up to production/enterprise levels, then the system would audit the existing workflows for possible refactoring of those workflows, and proceed to perform an update refactor where appropriate without disrupting the system as a whole.
+
+# The Philosophy in One Line:
 
 Every layer of Telara is independently evolvable — from the island on the browser to the schema in the database — because the constraints of today should never become the ceilings of tomorrow.
 
-# Telara as a solution to four base Conceptual  Problems
+# Telara as a solution to Four Base Conceptual Problems
 
 ## The Fragmented Data Problem
 
