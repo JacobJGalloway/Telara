@@ -19,10 +19,10 @@ Overall solution file and service projects are still to be created as this is a 
 
 ## Repository Commands & Lifecycle
 - Initialize Entire Workspace: `.\init-workspace.ps1` (PowerShell)
-- Build .NET 10 Solution: `dotnet build src/Backend/DotNet/Telara.sln`
+- Build .NET 10 Solution: `dotnet build src/Backend/DotNet/Telara.slnx`
 - Run DB Migrations: `dotnet ef database update --project src/Backend/DotNet/Telara.Domain --startup-project src/Backend/DotNet/Telara.OpsApi`
 - Run OpsApi Service (Includes fIoT / Banana Cake Pop): `dotnet run --project src/Backend/DotNet/Telara.OpsApi`
-- Run All Tests (Unit & Integration): `dotnet test src/Backend/DotNet/Telara.sln`
+- Run All Tests (Unit & Integration): `dotnet test src/Backend/DotNet/Telara.slnx`
 - Run Single Test Case: `dotnet test --filter "FullyQualifiedName~YourTestName"`
 - Build Java Services: `mvn clean compile -f src/Backend/Java/Telara.NotificationService/pom.xml`
 
