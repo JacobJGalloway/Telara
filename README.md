@@ -3,21 +3,32 @@ A unified manufacturing operations platform built on Theory of Constraints princ
 
 ---
 
+# Architectural Philosophy & Core Innovation
+
+Telara is intentionally engineered to address the systemic flaws of traditional Manufacturing Execution Systems (MES) and modern enterprise AI engineering:
+
+## Systemic Flow Over Local Efficiency: 
+
+Legacy platforms reward high local efficiency, often creating dangerous, unmanaged inventory stacks at non-bottleneck stations. Telara monitors millisecond-level inter-part completion delays to identify the true system constraint ("Herbie"), dynamically recalculating output cadences to protect floor flow.
+
+## Collapsed RAG Model (Anti-Hallucination): 
+
+Traditional AI pipelines add brittle network layers to check for vector data. Telara utilizes an atomic database lookup pattern—if a semantic vector match fails to meet the confidence threshold, the query instantly collapses into a relational fallback record at the database level.
+
+## Zero-Drift Predictability: 
+
+By ensuring the LLM only receives hyper-localized context or an explicit engineering baseline command, we eradicate hallucinations and data drift. We use deterministic, relational software patterns to make non-deterministic AI completely predictable.
+
 # Technology and Architecture Stack
 
-- SQL Server 2025 Express (Azure once funding gets into play) - CQRS implemented from the start
-- .NET 10 C# micro-services with Entity Framework Core (repository & UoW patterns in use)
-- AI Abstraction Interface/Adapter pattern to interface the main .NET codebase to AI model operations — connectors to Analytics & AI 
-  reasoning layer (Phase 3 constraint analysis, RAG-based recommendation engine, AI-assisted bottleneck identification)
-- Java/Spring - Escalation and Notification communications domain service (best suited libraries tied to this language)
-- GraphQL with Hot Chocolate Library (domain contract layer between front-end and back-end to support tighter data requests from cross-
-  platform frontend interfaces, including the potential for public facing APIs)
-- Claude Sonnet 5 - base AI model for single and multiple Agent workflows.
-- Microsoft Agent Framework - AI Agent/Tool orchestration and management
-- Blazor - Server-first UI layer handling routing, styling, and page layouts as MVC islands, supporting progressive static page    
-  application patterns with real-time SignalR integration for telemetry and monitoring surfaces
-- Island Architecture - This will generate  individual islands based on existing platform operations and support, while allowing for 
-  future cross-platform display and interaction (mobile, watch, tablet, laptop/desktop, etc.)
+- SQL Server 2025 Express - Localized data slicing (with a direct migration path to Azure once enterprise scaling triggers it).
+- CQRS Pattern - Implemented ASAP to rigidly separate high-frequency telemetry write paths from heavy analytical read operations.
+- .NET 10 Microservices - Core business and state domains utilizing Entity Framework Core backed by Repository and Unit of Work patterns.
+- AI Abstraction Interface/Adapter – Decouples the .NET core from GenAI platforms, exposing specialized connectors to the analytics and reasoning layers.
+- Java / Spring Boot – Isolated Escalation and Notification domain service, strategically scoped to leverage native ecosystem libraries and establish cross-platform fluency.
+- GraphQL via Hot Chocolate – The contract layer between frontend islands and backend services, allowing optimized data requests and public-facing API flexibility.
+- Claude Sonnet 5 – Underlying foundational LLM executing single-agent workflows and multi-agent loops.
+- Island Architecture – Each platform surface (web, mobile, watch, TV, etc.) is a fully self-hosted, independently runnable "Island" app, not a shared shell multiplexing between them. System- or user-level configuration decides which Island(s) are active. The current Web Island is a standalone, in-browser Blazor WebAssembly client (`Telara.Client`) served by its own thin ASP.NET Core host (`Telara.Web`), talking to the backend purely over GraphQL/HTTP. Future Islands (mobile, watch, TV) plug in as siblings under `src/Frontend/Islands/` without touching this one or the backend.
 
 ## Base Orchestration to MCP Server(s) managing tools and Agents
 
