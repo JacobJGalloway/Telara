@@ -26,6 +26,7 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
             entity.Property(e => e.BladeTemp).HasColumnName("blade_temp").HasPrecision(8, 4);
             entity.Property(e => e.MotorSpeed).HasColumnName("motor_speed").HasPrecision(18, 4);
             entity.Property(e => e.MotorTemp).HasColumnName("motor_temp").HasPrecision(8, 4);
+            entity.Property(e => e.BeltVibration).HasColumnName("belt_vibration").HasPrecision(8, 4);
         });
 
         modelBuilder.Entity<Role>(entity =>

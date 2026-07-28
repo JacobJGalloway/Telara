@@ -12,4 +12,5 @@ public interface IStationEquipmentReading
     decimal? BladeTemp { get; set; }
     decimal? MotorSpeed { get; set; }
     decimal? MotorTemp { get; set; }
+    decimal? BeltVibration { get; set; }
 }

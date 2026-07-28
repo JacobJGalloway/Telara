@@ -14,4 +14,5 @@ public class StationEquipmentReading : IStationEquipmentReading
     public decimal? BladeTemp { get; set; }
     public decimal? MotorSpeed { get; set; }
     public decimal? MotorTemp { get; set; }
+    public decimal? BeltVibration { get; set; }
 }
