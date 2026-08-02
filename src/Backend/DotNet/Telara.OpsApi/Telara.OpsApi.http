@@ -1,0 +1,6 @@
+@Telara.OpsApi_HostAddress = http://localhost:5158
+
+GET {{Telara.OpsApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

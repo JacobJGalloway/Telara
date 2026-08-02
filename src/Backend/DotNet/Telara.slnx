@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Telara.Core/Telara.Core.csproj" />
+  <Project Path="Telara.Domain/Telara.Domain.csproj" />
+  <Project Path="Telara.OpsApi/Telara.OpsApi.csproj" />
+</Solution>

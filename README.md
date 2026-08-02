@@ -3,22 +3,40 @@ A unified manufacturing operations platform built on Theory of Constraints princ
 
 ---
 
+# Architectural Philosophy & Core Innovation
+
+Telara is intentionally engineered to address the systemic flaws of traditional Manufacturing Execution Systems (MES) and modern enterprise AI engineering:
+
+## Systemic Flow Over Local Efficiency: 
+
+Legacy platforms reward high local efficiency, often creating dangerous, unmanaged inventory stacks at non-bottleneck stations. Telara monitors millisecond-level inter-part completion delays to identify the true system constraint ("Herbie"), dynamically recalculating output cadences to protect floor flow.
+
+## Collapsed RAG Model (Anti-Hallucination): 
+
+Traditional AI pipelines add brittle network layers to check for vector data. Telara utilizes an atomic database lookup pattern—if a semantic vector match fails to meet the confidence threshold, the query instantly collapses into a relational fallback record at the database level.
+
+## Zero-Drift Predictability: 
+
+By ensuring the LLM only receives hyper-localized context or an explicit engineering baseline command, we eradicate hallucinations and data drift. We use deterministic, relational software patterns to make non-deterministic AI completely predictable.
+
 # Technology and Architecture Stack
 
-- SQL Server 2025 Express (Azure once funding gets into play) - CQRS implemented from the start
-- .NET 10 C# micro-services with Entity Framework Core (repository & UoW patterns in use)
-- AI Abstraction Interface/Adapter pattern to interface the main .NET codebase to AI model operations — connectors to Analytics & AI reasoning layer (Phase 3 constraint analysis, RAG-based recommendation engine, AI-assisted bottleneck identification)
-- Java/Spring - Escalation and Notification communications domain service (best suited libraries tied to this language)
-- GraphQL with Hot Chocolate Library (domain contract layer between front-end and back-end to support tighter data requests from cross-platform frontend interfaces, including the potential for public facing APIs)
-- Claude Sonnet 5 - base AI model for single and multiple Agent workflows.
-- Microsoft Agent Framework - AI Agent/Tool orchestration and management
-- Blazor - Server-first UI layer handling routing, styling, and page layouts as MVC islands, supporting progressive static page application patterns with real-time SignalR integration for telemetry and monitoring surfaces
-- Island Architecture - This will generate the system as a series of .NET 10 services, Java/Springboot services, and ASP.NET Core Web API and Frontend islands for exposing the system's endpoint interface as well as individual islands 
-                        based on platform support, allowing for future cross-platform display and interaction (mobile, watch, tablet, laptop/desktop, etc.)
+- SQL Server 2025 Express - Localized data slicing (with a direct migration path to Azure once enterprise scaling triggers it).
+- CQRS Pattern - Implemented ASAP to rigidly separate high-frequency telemetry write paths from heavy analytical read operations.
+- .NET 10 Microservices - Core business and state domains utilizing Entity Framework Core backed by Repository and Unit of Work patterns.
+- AI Abstraction Interface/Adapter – Decouples the .NET core from GenAI platforms, exposing specialized connectors to the analytics and reasoning layers.
+- Java / Spring Boot – Isolated Escalation and Notification domain service, strategically scoped to leverage native ecosystem libraries and establish cross-platform fluency.
+- GraphQL via Hot Chocolate – The contract layer between frontend islands and backend services, allowing optimized data requests and public-facing API flexibility.
+- Claude Sonnet 5 – Underlying foundational LLM executing single-agent workflows and multi-agent loops.
+- Island Architecture – Each platform surface (web, mobile, watch, TV, etc.) is a fully self-hosted, independently runnable "Island" app, not a shared shell multiplexing between them. System- or user-level configuration decides which Island(s) are active. The current Web Island is a standalone, in-browser Blazor WebAssembly client (`Telara.Client`) served by its own thin ASP.NET Core host (`Telara.Web`), talking to the backend purely over GraphQL/HTTP. Future Islands (mobile, watch, TV) plug in as siblings under `src/Frontend/Islands/` without touching this one or the backend.
 
 ## Base Orchestration to MCP Server(s) managing tools and Agents
 
-This system architecture has systematically eliminated the most common failure points in enterprise AI engineering: it stops agent prompt bloat by moving rules into compiled .NET microservices. Context window dilution is prevented by using SQL Server Express data slices instead of massive NoSQL dumps. Complex asynchronous state management is eliminated by replacing custom loops with Microsoft Agent Framework. Compute costs are optimized by using linear GenAI for high-volume manufacturing telemetry and saving Autonomous Agents for real bottleneck logic.
+This system architecture is designed to eliminate the most common failure points in enterprise AI engineering — addressing agent prompt 
+bloat by moving rules into compiled .NET microservices, preventing context window dilution by using SQL Server Express data slices 
+instead of massive data store dumps, eliminating complex asynchronous state management and custom loop handling through the Microsoft 
+Agent Framework, and optimizing compute costs by reserving linear GenAI for high-volume manufacturing telemetry while saving Autonomous 
+Agents for real bottleneck logic.
 
                     ┌─────────────────────────────────────────────┐
                     │                 User Input                  │
@@ -67,10 +85,10 @@ Telara is designed to grow without outgrowing its architecture. Each phase is in
 Phase 1 — MVP
 Core telemetry, station monitoring, and dashboard functionality with time-relative seeded demo data. The floor is visible. Herbie can be found.
 Phase 2 — Internal Beta
-Controlled release to domain-knowledgeable testers. Feedback collected against real operational intuition rather than developer assumptions. Backlog refined from what's actually missing rather than what was guessed at.
+Controlled release to domain-knowledgeable testers. Feedback collected against real operational intuition rather than developer assumptions. Backlog refined from what's actually missing rather than what was guessed at. UI platform support added for tablet as a small screen access to monitoring and notification services within Telara. This is a simple scale down of functionality in preparation of full cross-platform functionality potential implementation intended for phase 3. Tablet should be able to be simulated by scaling a browser window to an appropriate scale.
 Phase 3 — Feedback-Driven Expansion
-Backlog priorities driven by beta feedback. Analytics and AI-assisted constraint reasoning introduced as the data foundation matures enough to support it.
+Backlog priorities driven by beta feedback. Analytics and AI-assisted constraint reasoning introduced as the data foundation matures enough to support it. UI platform support added for mobile push notifications and brief overview visualizations via UI intended for initial release at this point as well to show intended cross-platform functionality potential.
 Phase 4 — Facility-Wide Footprint
-Expansion beyond the production floor into inventory, energy monitoring, environmental conditions, safety compliance, and emergency response coordination. Telara's name was chosen to hold this scope from day one.
+Expansion beyond the production floor into inventory, energy monitoring, environmental conditions, safety compliance, and emergency response coordination. Telara's name was chosen to hold this scope from day one. Mobile implementation is refined based on finalized user feedback from Phase 3, and watch (limited functionality) plus other future devices (AR-augmented, TV, etc.) come online as their own Islands. Each device family gets exactly the data it needs through GraphQL query shaping, with platform-specific rendering (including OS-level differences like Android vs. iOS) handled inside that device's own Island — no separate adapter layer required, and the same pattern extends cleanly to non-standard/edge devices as they show up.
 Phase 5 — Enterprise & Multi-Facility
 Multi-facility coordination, public-facing API exposure, and client-specific data layer configuration. The architecture was built for this conversation — it just doesn't need to have it yet.
