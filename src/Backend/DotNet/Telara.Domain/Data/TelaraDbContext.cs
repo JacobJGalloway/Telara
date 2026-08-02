@@ -5,28 +5,32 @@ namespace Telara.Domain.Data;
 
 public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbContext(options)
 {
-    public DbSet<StationEquipmentReading> StationEquipmentReadings => Set<StationEquipmentReading>();
+    public DbSet<SensorReading> SensorReadings => Set<SensorReading>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Station> Stations => Set<Station>();
+    public DbSet<StationEquipment> StationEquipment => Set<StationEquipment>();
+    public DbSet<EquipmentType> EquipmentTypes => Set<EquipmentType>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<StationEquipmentReading>(entity =>
+        modelBuilder.Entity<SensorReading>(entity =>
         {
-            entity.ToTable("StationEquipmentReadings", "dbo");
+            entity.ToTable("SensorReadings", "dbo");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.StationEquipmentId).HasColumnName("station_equipment_id");
-            entity.Property(e => e.ReadingDateTime).HasColumnName("reading_datetime");
-            entity.Property(e => e.BeltSpeed).HasColumnName("belt_speed").HasPrecision(18, 4);
-            entity.Property(e => e.BeltTemp).HasColumnName("belt_temp").HasPrecision(8, 4);
-            entity.Property(e => e.OilTemp).HasColumnName("oil_temp").HasPrecision(8, 4);
-            entity.Property(e => e.BladeSpeed).HasColumnName("blade_speed").HasPrecision(18, 4);
-            entity.Property(e => e.BladeTemp).HasColumnName("blade_temp").HasPrecision(8, 4);
-            entity.Property(e => e.MotorSpeed).HasColumnName("motor_speed").HasPrecision(18, 4);
-            entity.Property(e => e.MotorTemp).HasColumnName("motor_temp").HasPrecision(8, 4);
-            entity.Property(e => e.BeltVibration).HasColumnName("belt_vibration").HasPrecision(8, 4);
+            entity.Property(e => e.FacilityId).HasColumnName("facility_id");
+            entity.Property(e => e.StationId).HasColumnName("station_id");
+            entity.Property(e => e.EquipmentId).HasColumnName("equipment_id");
+            entity.Property(e => e.SensorId).HasColumnName("sensor_id");
+            entity.Property(e => e.ReadingType).HasColumnName("reading_type");
+            entity.Property(e => e.Value).HasColumnName("value").HasPrecision(18, 4);
+            entity.Property(e => e.ReadingAtUtc).HasColumnName("reading_at_utc");
+            entity.HasIndex(e => new { e.FacilityId, e.StationId, e.EquipmentId, e.SensorId, e.ReadingAtUtc });
+            entity.HasOne(e => e.StationEquipment)
+                .WithMany()
+                .HasForeignKey(e => new { e.FacilityId, e.StationId, e.EquipmentId });
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -71,6 +75,45 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId);
+        });
+
+        modelBuilder.Entity<Station>(entity =>
+        {
+            entity.ToTable("Stations", "dbo");
+            entity.HasKey(e => new { e.FacilityId, e.StationId });
+            entity.Property(e => e.FacilityId).HasColumnName("facility_id");
+            entity.Property(e => e.StationId).HasColumnName("station_id");
+            entity.Property(e => e.LastOperatorActionUtc).HasColumnName("last_operator_action_utc");
+        });
+
+        modelBuilder.Entity<EquipmentType>(entity =>
+        {
+            entity.ToTable("EquipmentTypes", "dbo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<StationEquipment>(entity =>
+        {
+            entity.ToTable("StationEquipment", "dbo");
+            entity.HasKey(e => new { e.FacilityId, e.StationId, e.EquipmentId });
+            entity.Property(e => e.FacilityId).HasColumnName("facility_id");
+            entity.Property(e => e.StationId).HasColumnName("station_id");
+            entity.Property(e => e.EquipmentId).HasColumnName("equipment_id");
+            entity.Property(e => e.EquipmentTypeId).HasColumnName("equipment_type_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>();
+            entity.Property(e => e.LastSensorReadingUtc).HasColumnName("last_sensor_reading_utc");
+            entity.Property(e => e.ActiveInstanceId).HasColumnName("active_instance_id");
+            entity.Property(e => e.LeaseExpiresAtUtc).HasColumnName("lease_expires_at_utc");
+            entity.HasOne(e => e.Station)
+                .WithMany(s => s.Equipment)
+                .HasForeignKey(e => new { e.FacilityId, e.StationId });
+            entity.HasOne(e => e.EquipmentType)
+                .WithMany()
+                .HasForeignKey(e => e.EquipmentTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

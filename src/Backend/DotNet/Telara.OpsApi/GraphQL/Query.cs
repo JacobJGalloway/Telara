@@ -13,6 +13,6 @@ public static partial class Query
     [Authorize]
     [UseFiltering]
     [UseSorting]
-    public static async Task<IQueryable<StationEquipmentReading>> GetStationEquipmentReadings([Service] ISender mediator) =>
-        await mediator.Send(new GetStationEquipmentReadingsQuery());
+    public static async Task<IQueryable<SensorReading>> GetSensorReadings([Service] ISender mediator) =>
+        await mediator.Send(new GetSensorReadingsQuery());
 }
