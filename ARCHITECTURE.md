@@ -18,7 +18,9 @@ None of the core data-flow goal below was actually built in 1.1 — that sprint 
 
 Prove the core data flow works end to end, without an orchestration layer yet:
 
-Simulated station telemetry → MCP server (read/write tools) → SQL Server 2025 Express (via EF Core) → manual on-screen request displays the latest reading.
+Simulated station telemetry → MCP server (read/write tools) → SQL Server 2025 Express (via EF Core) → manual on-screen request displays the latest reading. (confirmed not completed in 1.1).
+
+Basic UI has added screens for viewing station workflow diagrams and a form for registering a new Station along with any Station Equipment to be added with the Station. Diagram should also have a breakdown below showing the last sensor readings of all viewed Sation Equipment.
 
 The MAF orchestrator is deliberately deferred to a later sprint. This sprint isolates one unknown — does the MCP tool layer work correctly — rather than proving MCP and orchestration together. If something breaks in a later sprint, it will be attributable to orchestration, not to the tools underneath it.
 
