@@ -40,6 +40,7 @@ Overall solution file and service projects are still to be created as this is a 
 ### 2. API Contract Layer (Hot Chocolate GraphQL)
 - **Design**: Direct client-facing operational interactions live strictly within the Hot Chocolate schema layer. Banana Cake Pop (`/graphql`) is the primary interface for testing and contract verification.
 - **Queries & Mutations**: Use MediatR records to cleanly isolate GraphQL entry points. Explicitly append `.UseFiltering()` and `.UseSorting()` to query endpoints to empower cross-platform frontend selection.
+- **Endpoint vs. query**: these are not interchangeable. The *endpoint* is the request-routing/contract surface — Hot Chocolate resolving the schema. The *query* is the implementation behind it that actually hits the data store (a MediatR query/handler in `Telara.Domain`). Domain models have to satisfy both: the standard C# class structure, and the GraphQL contract shape exposed through the schema.
 
 ### 3. Background Processing & Fake IoT Diagnostics
 - **Simulation**: High-frequency equipment telemetry streams tagged per station equipment. This will run as one service, but will likely have a topic queue or compound key to handle transmission from the station equipment to the readings database table and the notifications service if the readings are outside of equipment thresholds. 
@@ -57,3 +58,10 @@ Overall solution file and service projects are still to be created as this is a 
 ## Coding Style & Standards
 - **C# 14**: Implement file-scoped namespaces, implicit usings, nullable annotations, and primary constructors where applicable. 
 - **Namespaces**: Keep a clean namespace layout (`Telara.Core.*`, `Telara.Domain.*`, `Telara.OpsApi.*`). Interfaces live in `Interfaces/` subdirectories with the namespace suffix `.Interfaces`. Domain models implement their corresponding interface (e.g., `Tool : ITool`). Do not apply interface inheritance models directly onto rich or behavior-driven domain models.
+
+## Markdown Syntax Guardrails
+- This project uses standard GitHub-Flavored Markdown only.
+- Do NOT use Obsidian-style wiki-links (`[[page|label]]`). Use standard
+  Markdown links: `[label](url)` — or plain text if there's no real target.
+- If referencing another doc in this repo, link its actual relative path
+  (e.g. `[DECISIONS.md](./DECISIONS.md)`), not a wiki-style page name.
