@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="Telara.Core/Telara.Core.csproj" />
   <Project Path="Telara.Domain/Telara.Domain.csproj" />
+  <Project Path="../../McpServers/Telara.Maf.Orchestrator/Telara.Maf.Orchestrator.csproj" />
+  <Project Path="../../McpServers/Telara.Mcp.Haiku/Telara.Mcp.Haiku.csproj" />
   <Project Path="../../McpServers/Telara.Mcp.Internal/Telara.Mcp.Internal.csproj" />
   <Project Path="Telara.OpsApi/Telara.OpsApi.csproj" />
 </Solution>
