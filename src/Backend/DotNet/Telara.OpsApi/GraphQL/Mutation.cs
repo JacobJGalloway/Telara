@@ -1,4 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Mediator;
+using HotChocolate;
+using HotChocolate.Authorization;
+using Telara.Core.Maf;
 using Telara.Domain.CQRS.Commands;
 using Telara.Domain.CQRS.Queries;
 using Telara.Domain.Entities;
@@ -11,6 +16,84 @@ namespace Telara.OpsApi.GraphQL;
 public static partial class Mutation
 {
     private const string RefreshCookieName = "telara_refresh_token";
+
+    // The MCP SDK serializes enums (e.g. EquipmentStatus) as strings on the wire, using the
+    // enum member's exact name (e.g. "Idle", not "idle") - plain JsonSerializerDefaults.Web
+    // doesn't include a string-enum converter at all, so deserializing a tool's response
+    // without one throws on any enum-bearing result type.
+    private static readonly JsonSerializerOptions MafResultJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
+
+    // Station registration: routed through MAF to the Internal Functionality Server's tool
+    // (register_station), per ARCHITECTURE.md's Definition of Done. isError text is translated
+    // to a structured extensions.code the UI can act on - the GraphQL-native equivalent of the
+    // "409 Conflict with a structured body" the doc calls for, since OpsApi has no REST surface
+    // for registration to attach a literal HTTP status to.
+    [Authorize]
+    public static async Task<RegisterStationResult> RegisterStation(
+        [Service] MafClient mafClient,
+        string facilityId,
+        string stationId,
+        CancellationToken cancellationToken) =>
+        await CallMafAndUnwrap<RegisterStationResult>(
+            mafClient,
+            read: true,
+            toolName: "register_station",
+            arguments: new Dictionary<string, object>
+            {
+                ["facilityId"] = facilityId,
+                ["stationId"] = stationId,
+            },
+            cancellationToken);
+
+    // Equipment registration: routed through MAF to the Claude Haiku Server's tool
+    // (register_equipment), which itself calls back into the Internal Functionality Server -
+    // same Haiku-drives-workflow/Internal-owns-persistence seam as the tools underneath it.
+    [Authorize]
+    public static async Task<RegisterStationEquipmentResult> RegisterStationEquipment(
+        [Service] MafClient mafClient,
+        string facilityId,
+        string stationId,
+        string equipmentId,
+        int equipmentTypeId,
+        CancellationToken cancellationToken) =>
+        await CallMafAndUnwrap<RegisterStationEquipmentResult>(
+            mafClient,
+            read: false,
+            toolName: "register_equipment",
+            arguments: new Dictionary<string, object>
+            {
+                ["facilityId"] = facilityId,
+                ["stationId"] = stationId,
+                ["equipmentId"] = equipmentId,
+                ["equipmentTypeId"] = equipmentTypeId,
+            },
+            cancellationToken);
+
+    private static async Task<T> CallMafAndUnwrap<T>(
+        MafClient mafClient, bool read, string toolName, IReadOnlyDictionary<string, object> arguments, CancellationToken cancellationToken)
+    {
+        var result = read
+            ? await mafClient.CallReadAsync(toolName, arguments, cancellationToken)
+            : await mafClient.CallOperationalAsync(toolName, arguments, cancellationToken);
+
+        if (result.IsError)
+        {
+            var text = result.FirstText ?? $"{toolName} failed.";
+            var code = text.Contains("already registered") || text.Contains("already exists")
+                ? "CONFLICT"
+                : text.Contains("is not registered")
+                    ? "NOT_FOUND"
+                    : "INTERNAL";
+
+            throw new GraphQLException(ErrorBuilder.New().SetMessage(text).SetCode(code).Build());
+        }
+
+        return JsonSerializer.Deserialize<T>(result.FirstText!, MafResultJsonOptions)
+            ?? throw new GraphQLException($"{toolName} returned an empty response.");
+    }
 
     public static async Task<AuthPayload> Login(
         LoginInput input,
