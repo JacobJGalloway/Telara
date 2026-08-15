@@ -1,11 +1,8 @@
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telara.Core.Generators.Interfaces;
-using Telara.Domain.CQRS.Commands;
-using Telara.Domain.Exceptions;
+using Telara.Core.Maf;
 using Telara.Domain.Telemetry;
 
 namespace Telara.Core.Generators;
@@ -15,7 +12,7 @@ public class GeneratorBootOrchestrator(
     IGeneratorInstanceFactory factory,
     GeneratorRegistry registry,
     ISensorValueGenerator valueGenerator,
-    IServiceScopeFactory scopeFactory,
+    MafClient mafClient,
     ILogger<GeneratorBootOrchestrator> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -77,32 +74,40 @@ public class GeneratorBootOrchestrator(
 
     private async Task<bool> ClaimLease(GeneratorInstance instance, CancellationToken cancellationToken)
     {
-        using var scope = scopeFactory.CreateScope();
-        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-
-        try
+        var arguments = new Dictionary<string, object>
         {
-            await sender.Send(
-                new ClaimStationEquipmentLeaseCommand(
-                    instance.Config.FacilityId,
-                    instance.Config.StationId,
-                    instance.Config.EquipmentId,
-                    instance.Config.EquipmentTypeId,
-                    instance.Config.InstanceId,
-                    instance.Config.LeaseDuration),
-                cancellationToken);
+            ["facilityId"] = instance.Config.FacilityId,
+            ["stationId"] = instance.Config.StationId,
+            ["equipmentId"] = instance.Config.EquipmentId,
+            ["equipmentTypeId"] = instance.Config.EquipmentTypeId,
+            ["instanceId"] = instance.Config.InstanceId,
+            ["leaseDuration"] = instance.Config.LeaseDuration.ToString(),
+        };
 
+        var result = await mafClient.CallOperationalAsync("claim_equipment_lease", arguments, cancellationToken);
+
+        if (!result.IsError)
+        {
             instance.LastLeaseClaimUtc = DateTime.UtcNow;
             return true;
         }
-        catch (StationEquipmentAlreadyOperationalException ex)
+
+        // MAF/the MCP SDK don't carry structured error codes this sprint (see "Failure
+        // handling" in ARCHITECTURE.md's MAF Orchestrator section) - this is a message-content
+        // check, not a typed one, so it's a known limitation, not an oversight. Anything that
+        // doesn't match the expected lease-conflict text is treated as a genuine failure and
+        // left to propagate (BackgroundServiceExceptionBehavior.StopHost), rather than silently
+        // handled the same way as the expected case.
+        if (result.FirstText?.Contains("already leased by another active instance") == true)
         {
             // Expected business outcome, not a system error - see ARCHITECTURE.md Get-or-Create/Lease Semantics.
             logger.LogInformation(
                 "Generator instance {InstanceId} could not claim/renew the lease for equipment {EquipmentId} - already held by another active instance.",
-                instance.Config.InstanceId, ex.ConflictingKey.TelemetryId);
+                instance.Config.InstanceId, instance.Config.EquipmentId);
             return false;
         }
+
+        throw new InvalidOperationException($"claim_equipment_lease failed for {instance.Config.EquipmentId}: {result.FirstText}");
     }
 
     private async Task WriteReadings(GeneratorInstance instance, CancellationToken cancellationToken)
@@ -110,15 +115,26 @@ public class GeneratorBootOrchestrator(
         if (instance.Config.Sensors.Count == 0)
             return;
 
-        using var scope = scopeFactory.CreateScope();
-        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-
         var readings = instance.Config.Sensors
-            .Select(sensor => new SensorReadingInput(sensor.SensorId, sensor.ReadingType, valueGenerator.NextValue(sensor)))
+            .Select(sensor => new Dictionary<string, object>
+            {
+                ["sensorId"] = sensor.SensorId,
+                ["readingType"] = sensor.ReadingType,
+                ["value"] = valueGenerator.NextValue(sensor),
+            })
             .ToList();
 
-        await sender.Send(
-            new RecordSensorReadingsCommand(instance.Config.FacilityId, instance.Config.StationId, instance.Config.EquipmentId, readings),
-            cancellationToken);
+        var arguments = new Dictionary<string, object>
+        {
+            ["facilityId"] = instance.Config.FacilityId,
+            ["stationId"] = instance.Config.StationId,
+            ["equipmentId"] = instance.Config.EquipmentId,
+            ["readings"] = readings,
+        };
+
+        var result = await mafClient.CallOperationalAsync("ingest_sensor_readings", arguments, cancellationToken);
+
+        if (result.IsError)
+            throw new InvalidOperationException($"ingest_sensor_readings failed for {instance.Config.EquipmentId}: {result.FirstText}");
     }
 }

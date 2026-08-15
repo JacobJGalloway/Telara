@@ -2,9 +2,11 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Telara.Core.Generators;
 using Telara.Core.Generators.Interfaces;
+using Telara.Core.Maf;
 using Telara.Domain.Data;
 using Telara.OpsApi.Auth;
 
@@ -17,6 +19,12 @@ builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetim
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<TokenService>();
+
+// The generator and the GraphQL read query both route through MAF instead of calling
+// Telara.Domain/MediatR directly - see "MAF Orchestrator (This Sprint)" in ARCHITECTURE.md.
+builder.Services.Configure<MafClientOptions>(builder.Configuration.GetSection(MafClientOptions.SectionName));
+builder.Services.AddHttpClient<MafClient>((sp, client) =>
+    client.BaseAddress = new Uri(sp.GetRequiredService<IOptions<MafClientOptions>>().Value.BaseUrl));
 
 builder.Services.Configure<GeneratorSettings>(builder.Configuration.GetSection(GeneratorSettings.SectionName));
 builder.Services.AddSingleton<IGeneratorInstanceFactory, GeneratorInstanceFactory>();
