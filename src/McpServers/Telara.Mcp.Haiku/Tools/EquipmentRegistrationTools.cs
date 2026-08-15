@@ -1,6 +1,4 @@
 using System.ComponentModel;
-using ModelContextProtocol;
-using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using Telara.Mcp.Haiku.Clients;
 
@@ -21,7 +19,7 @@ public static class EquipmentRegistrationTools
     {
         var client = await internalClientProvider.GetClientAsync(cancellationToken);
 
-        var result = await client.CallToolAsync(
+        return await client.CallAndUnwrapAsync(
             "register_station_equipment",
             new Dictionary<string, object>
             {
@@ -30,13 +28,6 @@ public static class EquipmentRegistrationTools
                 ["equipmentId"] = equipmentId,
                 ["equipmentTypeId"] = equipmentTypeId,
             },
-            cancellationToken: cancellationToken);
-
-        var text = result.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text;
-
-        if (result.IsError == true)
-            throw new McpException(text ?? "register_station_equipment failed on the Internal Functionality Server.");
-
-        return text ?? string.Empty;
+            cancellationToken);
     }
 }
