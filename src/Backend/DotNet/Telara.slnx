@@ -1,4 +1,6 @@
 <Solution>
+  <Project Path="../../Tests/DotNet/Telara.Core.Tests/Telara.Core.Tests.csproj" />
+  <Project Path="../../Tests/DotNet/Telara.Domain.Tests/Telara.Domain.Tests.csproj" />
   <Project Path="Telara.Core/Telara.Core.csproj" />
   <Project Path="Telara.Domain/Telara.Domain.csproj" />
   <Project Path="../../McpServers/Telara.Maf.Orchestrator/Telara.Maf.Orchestrator.csproj" />
