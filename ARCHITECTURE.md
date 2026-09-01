@@ -1,146 +1,73 @@
-# Architecture — Branch 1.2
+# Architecture — Branch 1.3
 
-## Carried Over from 1.1
+## Carried Over from 1.2
 
-None of the core data-flow goal below was actually built in 1.1 — that sprint instead landed auth (JWT + rolling refresh tokens, ahead of its original 1.2 schedule) and a `StationEquipmentReading` read query over GraphQL. The Sprint Goal, Domain Model, Generator Design, and Definition of Done sections below are the unmet 1.1 scope, carried forward as-is into 1.2 rather than rewritten, since they were never invalidated — just not started.
+1.2 closed on backend/data-flow scope: simulated telemetry → MAF (stateless router) → Claude Haiku MCP Server (ingestion) → Internal Functionality MCP Server (write) → SQL Server via EF Core, plus the manual on-screen read path and Station/StationEquipment registration, both also routed through MAF. `Telara.Domain.Tests`/`Telara.Core.Tests` scaffolding landed under `src/Tests/DotNet/`. Backend auth (JWT + rolling refresh tokens, `[Authorize]` on GraphQL resolvers) shipped even earlier, in 1.1.
 
-### What Was Actually Built in 1.1
-- **Auth (JWT + rolling refresh tokens):** `User`, `Role`, `RefreshToken` domain entities; `TokenService` (`Telara.OpsApi/Auth/`) issues tokens; a GraphQL login mutation plus `AuthPayload`/`LoginInput`/`UserProfile` types expose it. Landed ahead of its original 1.2 schedule (see Auth/RBAC in `DECISIONS.md`).
-- **`StationEquipmentReading`** (retired in 1.2): the 1.1 placeholder was a flat telemetry-reading entity — `Id`, `StationEquipmentId`, `ReadingDateTime`, plus nullable sensor fields (`BeltSpeed`, `BeltTemp`, `OilTemp`, `BladeSpeed`, `BladeTemp`, `MotorSpeed`, `MotorTemp`, `BeltVibration`) — with `StationEquipmentId` as a flat string, not FK'd to any real entity. Replaced by the actual `Station`/`StationEquipment`/`SensorReading` model below, now implemented in `Telara.Domain`: compound-keyed entities, `SensorReading` normalized to one row per reading (`ReadingType` as data, not a column) with a real FK down through `StationEquipment`. `GetStationEquipmentReadingsQuery`/Handler and the GraphQL field were replaced by `GetSensorReadingsQuery`/Handler and `Query.GetSensorReadings`.
-
-## MCP Server Topology
-
-**Resolved — moved to [`DECISIONS.md`](./DECISIONS.md).** Three servers split by workload shape: an Internal Functionality Server (no LLM, parameterized domain-data/data-slice lookups), a Claude Haiku server (linear, high-throughput/low-cost workflows), and a Claude Sonnet server (deep reasoning, houses RAG). Physical geography is single-machine through demo-stable, cloud-portable later.
-
-**Still open, tracked here since it's implementation-scoped, not architectural:** exact tool inventory per server — which specific lookups/workflows belong to which of the three — pending as MCP implementation actually starts this sprint. The Haiku/Internal split for this sprint's two flows (ingestion, read) is now defined in MAF Orchestrator (This Sprint) below; the Sonnet server's tool inventory stays open since it isn't built until 1.3+.
+**Deferred out of 1.2, now 1.3's starting scope:**
+- Client-side User Auth — Blazor login screen + page-level `[Authorize]` wiring (backend already exists, unaffected)
+- Basic UI — Station/StationEquipment registration forms
+- Basic UI — workflow diagram screen (box-and-line, equipment-box click-through to a domain-data modal)
+- Test coverage — 1.2 only scaffolded Domain/Core; OpsApi, the MCP servers, and MAF itself have zero tests
 
 ## Sprint Goal
 
-**Amended 2026-08-14** — see Decisions Made This Sprint. Originally scoped to prove the data flow without an orchestration layer; MAF is now in scope alongside both MCP servers, kept deliberately thin (routing only, no reasoning) so the added risk is bounded.
+Two threads this sprint:
 
-Prove the core data flow works end to end, now including a first-cut MAF orchestrator:
+1. **Client-side UI**, closing out what 1.2 didn't get to: a Blazor login screen wired to the existing JWT/refresh backend, Station/StationEquipment registration forms, and a workflow diagram screen — a semi-compact box-and-line view of a station's equipment, clickable into a modal showing that equipment's domain data, with the latest sensor readings for all viewed equipment shown below the diagram.
+2. **Single-line routing prereq** ("the wild card"): a minimal, linear station-to-station path — raw material intake through stations to the loading dock — so the workflow diagram has real topology to render and 1.4 has a concrete dataset to point Sonnet-driven cross-line bottleneck analysis at. This is deliberately thin: no raw-materials/assembly-line domain model, just enough routing data to answer "what does this station feed into, and where does this line terminate?"
 
-Simulated station telemetry → MAF orchestrator → Claude Haiku MCP Server (ingestion tool, ETL adapter) → Internal Functionality MCP Server (write tool) → SQL Server 2025 Express (via EF Core). A manual on-screen request → MAF orchestrator → Internal Functionality MCP Server's read tool → displays the latest reading. (confirmed not completed in 1.1).
-
-Basic UI has added screens for viewing station workflow diagrams and a form for registering a new Station along with any Station Equipment to be added with the Station. Diagram should also have a breakdown below showing the last sensor readings of all viewed Sation Equipment.
-
-See "MAF Orchestrator (This Sprint)" below for what MAF does and, just as importantly, does not do this sprint.
+Both threads point at the same screen: the diagram needs the routing data to draw its lines, and the routing data has no reason to exist yet without the diagram needing it.
 
 ## Explicit Non-Goals for This Slice
 
-- No Claude Sonnet MCP Server, and no deep-reasoning/RAG orchestration through MAF — MAF this sprint is routing only, between the Internal Functionality Server and the Claude Haiku Server; see MAF Orchestrator (This Sprint)
-- No real bottleneck/constraint logic or AI-assisted reasoning
+- No Claude Sonnet MCP Server, and no deep-reasoning/RAG orchestration through MAF — still 1.4+, once single-line routing data actually exists to reason over
+- No cross-line or multi-line bottleneck/Herbie-finding logic — this sprint proves a *single* line's topology; cross-line analysis is what 1.4's Sonnet server is for
+- No `RawMaterial`/`Assembly` domain entities — the routing prereq below reuses `Station`, it does not model materials or parts moving through it
+- No parallel/branching station sequences — this sprint's routing stays linear, consistent with `StationEquipment.StationSequence` already being linear-only since 1.2
 - No RAG or recommendation engine
 - No escalation routing (Java/Spring domain untouched this sprint)
-- No push/real-time updates — SignalR integration is deferred; reads are manual/on-request only
-- No process routing table (station-to-workflow dependency graph) — needed before Phase 3 constraint analysis is meaningful, not before this sprint
-- No compaction job — shift-based compaction and 90-day retention are a fast-follow once read/write is proven
+- No push/real-time updates — SignalR integration is deferred; reads stay manual/on-request
+- No compaction job — shift-based compaction and 90-day retention are a fast-follow once more read/write volume exists
+- No multi-facility logic — `FacilityId` stays a single stubbed value, same as 1.2
 
-Authentication/authorization is no longer a non-goal — it landed in 1.1 (see Carried Over note above) and is already in place.
+## Domain Model Additions (This Sprint)
 
-## Domain Model (This Sprint)
+**Single-line routing on `Station`** — the minimal shape needed to answer "what does this station feed into," reusing the existing entity rather than introducing new ones:
 
-Three levels now, not two — `Station` is the physical location/cell, `StationEquipment` is the actual machine, `SensorReading` is a single telemetry point off a piece of equipment. (`Station` was previously described as "the machine-level record"; that was wrong once it became clear a station houses multiple pieces of equipment, potentially running in parallel — see TOC's parallel/sequential/combination requirement in `DECISIONS.md`.)
+- `NextStationId` (string?, self-referencing FK to `Station` within the same `FacilityId`) — nullable; null means this station is a terminal node in its line. Linear only: one outgoing edge per station, no branching/merging this sprint.
+- `IsLoadingDock` (bool) — marks a station as a line's terminal/output node. A station with `IsLoadingDock == true` is expected (not yet enforced) to have `NextStationId == null`.
 
-**`Station`** — persisted entity, the physical station/location, not a machine itself. `(FacilityId, StationId)` is the compound primary key; `StationId` doubles as the correlation key for logging/tracing across the system.
+This is the station-to-workflow dependency graph that's been an explicit non-goal since 1.2 — scoped down here to a single line's linear path, not the full multi-line/cross-plant graph Phase 5 eventually needs.
 
-- `FacilityId` (string, PK) — stubbed for this sprint: single hardcoded/default value, no multi-facility logic reads it yet. Included in the key now, per the same avoid-a-retrofit reasoning used elsewhere, so Phase 5 multi-facility support (if it happens) doesn't require re-keying every table.
-- `StationId` (string, PK)
-- `LastOperatorAction` (DateTime?) — presence/staffing signal, stays station-level since staffing is about the location, not any one machine
-- `IsOperational()` — **behavior, not stored state.** Returns true only if every `StationEquipment` row at this station reports `Status == Operational`. Deliberately not persisted as its own column — it's a rollup of equipment-level truth, not a separate fact that could drift out of sync with it. Doubles as an under-staffing/bottleneck signal for Personnel & Scheduling analytics: a station can be effectively down (or artificially "up") independent of any single equipment fault.
-
-Station also implicitly anchors an assembly-line/workflow producing either a finished part (to distribution) or a sub-assembly (sent to another plant for final assembly) — this cross-plant handoff is part of why Phase 5 exists (finding a "Herbie" between plants, not just within one). That relationship is intentionally **not modeled yet**: the station-to-workflow dependency graph remains an explicit non-goal for this sprint (see Explicit Non-Goals above and Theory of Constraints Data Dependency below).
-
-**`StationEquipment`** — persisted entity, the actual machine record (this is the level `Station` used to incorrectly represent). `(FacilityId, StationId, EquipmentId)` compound PK, FK to `Station` via `(FacilityId, StationId)`.
-
-- `EquipmentId` (string, PK)
-- `EquipmentType` (string, backed by a small `EquipmentTypes` reference table rather than a raw free-text column or a compiled C# enum) — the demo plant's equipment list (drill press, band saw, planer, plasma cutter, 3D printer, etc.) is explicitly still open per Theory of Constraints Data Dependency in `DECISIONS.md`; a reference table gets referential integrity and a natural home for a future "expected sensor telemetry per equipment type" join, without a code deploy every time a new machine type is added. A compiled enum is a reasonable upgrade once that list actually stabilizes, not before.
-- `StationSequence` — a non-unique number that indicates this machine's order in the station's workflow sequence. While a simple Station may only have enough equipment to do a simple workflow, there will be more complex station which will have sub-processes that run sequences in parallel. denoting the nested sub-sequence for analysis is being deferred for a later sprint currently. This sprint will focus on linear, single machine-order workflows.
-- `Status` (enum: Operational, Idle, Faulted, etc.) — moved down from `Station`; this is the real machine-health state
-- `LastSensorReading` (DateTime?) — machine health signal, moved down from `Station`
-- `ActiveInstanceId` (string?) — which generator instance currently holds the write lease **for this specific piece of equipment**
-- `LeaseExpiresAt` (DateTime?) — liveness lease, separate concern from `Status`
-
-`Status`/`LastSensorReading`/lease fields all moved down from `Station` to here: since equipment can run in parallel at the same station, a saw and a conveyor at one station can't share a single lease or a single status without one masking the other.
-
-**`SensorReading`** — telemetry scoped to a parent `StationEquipment`, not a duplicate of it.
-
-- `SensorId`, `FacilityId` + `StationId` + `EquipmentId` (FK to `StationEquipment`), `ReadingType`, value, timestamp
-
-**Uniqueness/identity is governed by a compound key**, not a flat ID check, now spanning the three real levels above instead of a station/sensor split with a hypothetical third:
-
-```csharp
-public readonly record struct TelemetryKey(string FacilityId, string StationId, string TelemetryLevel, string TelemetryId);
-public enum TelemetryLevel { Station, Equipment, Sensor }
-```
-
-A boot-time audit builds a `HashSet<TelemetryKey>` across all configured generator instances and flags exact duplicates. Same `StationId` at different `TelemetryLevel`s (a station and its equipment) is expected and not a conflict. `FacilityId` is a stub for this sprint — every generator instance uses the same default value — but is part of the key/PK now specifically to avoid a schema retrofit later.
-
-## Generator Design
-
-- Generators are **one per `StationEquipment`**, each producing readings for its own sensors — held as plain objects in a `ConcurrentDictionary<TelemetryKey, ...>`, not DI-managed services. This keeps them queryable for liveness/staleness checks without scope or resolution overhead, and avoids the EF Core captive-dependency problem (DbContext is Scoped by default; a Singleton or long-lived plain object must never hold one for its full lifetime).
-- A single **boot orchestrator** (`IHostedService`/`BackgroundService`) reads instance configs at startup, runs the uniqueness audit, and constructs instances via a **factory**.
-- Each write uses `IServiceScopeFactory.CreateScope()` to resolve a fresh `DbContext` per operation — one scope per write, not one scope for a generator's lifetime.
-- Telemetry generation logic is **adapted from the existing Yearly Yields generator pattern** rather than built new, since that pattern is already proven at smaller scale.
-
-### Get-or-Create / Lease Semantics
-
-On startup, a generator instance looks up its `TelemetryKey`:
-
-- **No existing row** → create new. `Status = Operational`. Claim the lease (`ActiveInstanceId` = this generator's own stable `InstanceId`, `LeaseExpiresAt` = now + configured interval).
-- **Existing row, lease expired or unclaimed** → safe takeover. This is the crash-recovery path: a generator restarting after a hard failure finds its own stale lease and reclaims it. **`Status` is inherited as-is** from the last recorded value (per the "duplicate the last recorded status" requirement) — lease state and status are independent concerns.
-- **Existing row, lease still active under a *different* `InstanceId`** → genuine conflict. Throws a distinct `StationEquipmentAlreadyOperationalException` (carrying the conflicting `TelemetryKey`), translated at the API layer to `409 Conflict` with a structured body the UI can act on (prompt: assign a new ID). This is an expected business outcome, not a system error, and should not be logged/alerted as one.
-
-Each generator instance has its own stable `InstanceId` (GUID, assigned at construction, independent of `StationId`) so the lease can distinguish "this is me coming back" from "this is a different writer."
-
-Race condition note: the get-or-create check-then-insert has a narrow race window (near-simultaneous startup attempts on the same key). `TelemetryKey` should carry a unique constraint at the database level regardless of the in-memory audit, with conflict-on-insert handled via retry/re-fetch.
-
-## MAF Orchestrator (This Sprint)
-
-**Scope amendment, 2026-08-14** (see Decisions Made This Sprint): originally deferred entirely; brought back into 1.2 alongside both MCP servers because the actual risk this sprint is proving the *whole* request path — telemetry write, on-screen read, and now routing — works together, not just the tools in isolation. Kept deliberately thin to bound that added risk: **routing only, no reasoning, no state machine, no Sonnet server.** The Claude Sonnet MCP Server and any deep-reasoning/RAG orchestration through MAF stay deferred to 1.3 or later, once this Internal/Haiku layout is stabilized — not decided here.
-
-- MAF sits in front of the two MCP servers built this sprint (Internal Functionality Server, Claude Haiku Server) and is the layer both the GraphQL resolvers and the generator's write path call through, rather than either calling MCP tools directly. This is the actual behavior change from the pre-amendment plan, where the calling client invoked MCP tools directly.
-- **Routing rule this sprint:** read tools (sensor reading lookups, Station/StationEquipment lookups) route to the Internal Functionality Server. Operational/write tools (lease claims, sensor writes, Station/StationEquipment registration) route to the Claude Haiku Server, which drives the workflow but calls back into Internal Functionality Server tools both to shape raw/incoming data into actual domain models and to persist it — Haiku owns *workflow*, Internal Functionality Server owns *domain contract shape*, so Haiku's own tools never need to know the domain model's structure directly. This is the existing Definition of Done language below, just now explicitly named as MAF's routing table rather than left implicit.
-- **Failure handling:** MAF surfaces a routed MCP tool's error as-is rather than wrapping or swallowing it — e.g., `StationEquipmentAlreadyOperationalException` still resolves to `409 Conflict` at the API layer, unchanged from the Get-or-Create/Lease Semantics above. MAF adds a routing hop, not a new error-handling layer.
-- No cross-server orchestration logic beyond "which server owns this tool" — no retries-with-backoff, no multi-step chaining across both servers in one request, no state persisted by MAF itself. Those are explicitly deferred along with the Sonnet server.
-- **Formatting tool return shape is per-scenario, not a single uniform contract.** What an Internal Functionality Server formatting tool hands back to Haiku depends on what Haiku's workflow needs it for — a JSON object for a registration hand-off, an updated DOM/view-model object if Haiku is passing a result back up to the API controller for partial page hydration, etc. Expect multiple distinct contract shapes, one per Haiku-driven scenario, rather than one generic "domain model" return type.
-
-**Why stateless-MAF-for-now is acceptable:** the work buildable with the two deterministic servers already available (Internal Functionality, Haiku) doesn't need orchestrator-held state — Haiku's job is raw sensor ingestion from the generators, running each reading through the existing ETL adapter (see Ingestion / Hardware in `DECISIONS.md`) via calls to Internal Functionality Server tools, before the internal store persists it. That same internal store then doubles as the base dataset for Station/assembly-line views (workflow diagrams, latest-reading breakdowns) — no separate read model needed for this sprint's UI. State persistence in the orchestrator is deferred specifically until Sonnet's *non-deterministic* processes need it — highlighting the Herbie in a dataset and producing basic recommendations is 1.3+ scope, not this sprint's.
-
-**Forward-looking note, not this sprint's work:** this sprint's Haiku workloads are stateless call-throughs (ingest → format → persist). Once more complex UI/Sonnet-reasoning scenarios arrive, Haiku is expected to use its knowledge of MAF's tool discovery to manage its own multi-tool workflow, rather than MAF hardcoding a single fixed route per request type the way it does this sprint. This is still deterministic, not open-ended reasoning: MAF hands Haiku a workflow with a **bounded set of linear decision points — a fixed binary-tree-shaped branch structure, not free-form tool selection.** At each point Haiku picks between a known, finite set of next tools based on the prior result, but the tree itself (which branches exist, what triggers each) is fixed by MAF/config, not decided by Haiku on the fly. That's a Haiku-side workflow capability, not a change to MAF's own scope (MAF stays a stateless router through 1.2 regardless) — flagged here since it's the natural next step once the two-server routing table above is stable, not because it's being built now.
+**`GetStationWorkflow(facilityId, stationId)`** — new GraphQL query, the concrete endpoint use case for the routing fields above. Walks the `NextStationId` chain from the given station to its `IsLoadingDock` terminus and returns the ordered station list (each with its `StationEquipment` and latest `SensorReading` per equipment) for the workflow diagram screen to render. Read-only; follows the existing direct-MediatR pattern (`GetSensorReadings`), not routed through MAF — this is bulk read shaping for a UI screen, not an operational/write workflow.
 
 ## Definition of Done
 
-A simulated equipment reading is generated by a generator instance, routed through MAF to the Claude Haiku MCP Server's ingestion tool (ETL adapter → Internal Functionality Server write tool), and persisted to SQL Server through EF Core. A manual on-screen request routes through MAF to the Internal Functionality Server's read tool and displays the latest reading for a given piece of equipment. The boot-time audit correctly rejects a configuration with a duplicate `TelemetryKey`. A generator instance that restarts reclaims its existing `StationEquipment` row (same `EquipmentId`, inherited `Status`) rather than creating a duplicate. A second live instance attempting to claim an already-leased `TelemetryKey` receives a `409 Conflict`, not silent data corruption. `Station.IsOperational()` correctly returns false when any of its `StationEquipment` rows is `Faulted`, and true when all are `Operational`.
+**Client-side auth:** a Blazor login screen posts to the existing `Login` GraphQL mutation, stores the resulting access token, and attaches it to subsequent GraphQL requests. Page/component-level `[Authorize]` is enforced in the Blazor router consistent with the resolver-level `[Authorize]` already in place server-side — same principal, same claims, checked at both layers per the Auth/RBAC decision in `DECISIONS.md`. Logout clears the session and the refresh cookie via the existing `Logout` mutation.
 
-No Sonnet server, no orchestrator-held state, no push updates, no compaction — all explicitly out of scope per above. (Auth is already built — see Carried Over from 1.1.) MAF itself is in scope this sprint, per the amendment above, but strictly as a stateless router between the two deterministic MCP servers.
+**Basic UI:** a form registers a new `Station` and any `StationEquipment` to add with it, calling the existing `RegisterStation`/`RegisterStationEquipment` mutations (already routed through MAF per 1.2). A workflow diagram screen renders a station's equipment as a semi-compact box-and-line layout; clicking a box opens a modal with that equipment's domain data; the latest sensor reading for each viewed piece of equipment is listed below the diagram.
 
-Station and StationEquipment Registration need to be operational from the API endpoints, routed through MAF per the rule above. Station registration runs through the Internal Functionality Server tools. Equipment registration runs through the Haiku MCP Server, which drives the workflow but calls back into Internal Functionality Server tools to format raw/incoming data into actual domain models before hand-off to the data repository — Haiku owns *workflow*, Internal Functionality Server owns *domain contract shape*, so Haiku's tools never need to know the domain model's structure directly (same seam as the ETL adapter pattern in `DECISIONS.md`'s Ingestion/Hardware section, just applied to registration payloads too, not only sensor telemetry). Reads occur through the Internal Functionality Server; operational tasks (registration, lease claims, sensor writes) are driven by the Claude Haiku MCP Server, which calls into Internal Functionality Server tools for both formatting and persistence.
+**Single-line routing:** `Station.NextStationId`/`IsLoadingDock` exist as an EF Core migration. At least one seeded demo line (raw-material-facing station → intermediate stations → a station with `IsLoadingDock = true`) exists via `Telara.SQLScripts` seed data. `GetStationWorkflow` returns the correct ordered station list for a seeded line, terminating cleanly at the loading dock, and the workflow diagram screen renders it end to end.
 
-**Deferred to 1.3 (2026-09-01):** basic UI (Station/StationEquipment registration forms, the workflow diagram screen with equipment-box click-through to a domain-data modal) and the Blazor-side login screen/page-level `[Authorize]` wiring did not get built this sprint — `Telara.Client` is still the default project scaffold (`Counter.razor`/`Weather.razor`, no app screens). Backend auth (JWT + rolling refresh tokens, `[Authorize]` on GraphQL resolvers) landed in 1.1 and is unaffected by this deferral; only the frontend login UI moves with the rest of the UI work. Station scenarios will need to be created to generate the topology to properly develop and test the Herbie-finding logic and related diagrams — priority item for 1.3.
+**Test coverage:** OpsApi, the MCP servers, and MAF each get initial test coverage this sprint — not the full 85-90% target yet, but no longer zero. Coverage on `Telara.Domain`/`Telara.Core` moves from 1.2's scaffolding toward the 85-90% goal.
 
-**Unit test scaffolding (2026-08-18):** `Telara.Domain.Tests` and `Telara.Core.Tests` stood up under `src/Tests/DotNet/`, a sibling tree to `src/Backend/DotNet/` rather than a `.Tests` folder next to each source project, so the split doesn't complicate `dotnet build`/`dotnet test src/Backend/DotNet/Telara.slnx` (project paths are relative in `Telara.slnx` regardless of physical location). Starter tests cover the boot-time duplicate-`TelemetryKey` audit, lease claim/reclaim/409-conflict, and `Station.IsOperational()` — the per-sprint scaffolding expectation, not the 85-90% coverage goal (not required this sprint). No tests yet for OpsApi, the MCP servers, or MAF itself; candidates for 1.3 scaffolding.
+No Sonnet server, no cross-line analysis, no raw-materials domain model, no push updates, no compaction, no escalation work — all explicitly out of scope per above.
 
 ## Decisions Made This Sprint
 
-- **Amended 2026-09-01:** Basic UI (registration forms, workflow diagram screen) and the frontend login UI deferred to 1.3, closing 1.2 on the backend/MAF/data-flow scope instead — see Definition of Done above. Backend auth from 1.1 is unaffected; this is a frontend-only deferral.
-- **Amended 2026-08-14:** MAF orchestrator brought back into 1.2 scope, alongside both MCP servers, rather than deferred to its own sprint. Kept deliberately thin — stateless routing only, no reasoning, no Sonnet server — for two reasons: (1) the original isolate-the-MCP-tool-layer reasoning is superseded by wanting the full request path (write, read, routing) proven together this sprint; (2) getting hands-on with MAF's actual behavior and limits against deterministic Internal/Haiku traffic first is deliberately sequenced before handing it Sonnet's non-deterministic, state-carrying workflows in 1.3+ — better to learn the orchestrator's edges on predictable traffic than to debug both the orchestrator and non-deterministic reasoning at the same time. See MAF Orchestrator (This Sprint) above.
-- Chose plain objects in a `ConcurrentDictionary` over DI-managed services for generator instances, to avoid EF Core captive-dependency issues and keep the collection directly queryable for liveness checks.
-- Separated `Status` (descriptive) from lease ownership (`ActiveInstanceId`/`LeaseExpiresAt`) after recognizing that conflating them would block legitimate crash-recovery restarts.
-- Adopted a compound `(StationId, TelemetryLevel, TelemetryId)` key instead of a flat ID check, to support multi-level telemetry (station vs. equipment vs. sensor) uniformly.
-- Deferred process routing (station-to-workflow dependency graph) past this sprint, but flagged it as a prerequisite for Phase 3 constraint analysis to be meaningful once multiple part types share stations.
-- Introduced `StationEquipment` as its own persisted entity between `Station` and `SensorReading` (1.2): `Station` was previously mis-described as "the machine-level record," but a station houses multiple pieces of equipment, potentially running in parallel — `Status`, `LastSensorReading`, and lease ownership all moved down to `StationEquipment` accordingly. `Station` itself gained `IsOperational()` as a computed rollup rather than stored state, doubling as a Personnel & Scheduling under-staffing signal.
+- **2026-09-01:** Single-line station routing (`NextStationId`/`IsLoadingDock` on `Station`) added as this sprint's "wild card," justified specifically by the workflow diagram screen's need for real topology to render — not a step toward the full raw-materials/assembly-line domain model, which stays out of scope until a specific use case needs it. Chosen over a new `StationRoute`/`Assembly` entity to keep the addition minimal and reversible; a richer model can replace this once 1.4's cross-line Sonnet analysis defines what it actually needs.
+- **2026-09-01:** `GetStationWorkflow` reads go through direct MediatR, not MAF — same reasoning as `GetSensorReadings` in 1.2 (bulk UI-shaping reads for high-frequency/UI-driven access don't need MAF's routing hop; MAF stays reserved for the ingestion/registration flows it already owns).
 
 ## Open Risks / Unknowns
 
-- [Add as encountered]
+- `NextStationId`/`IsLoadingDock` referential integrity (a station pointing at itself, a cycle, more than one loading dock terminus per line) isn't enforced by a DB constraint this sprint — flagged for validation logic or a follow-up constraint once real seed scenarios expose what actually needs guarding.
+- **Known limitation, not addressed this sprint:** `NextStationId` is a single self-referencing FK, so it can only represent one outgoing edge per station. A station that cross-feeds multiple downstream lines (a larger station splitting output across more than one line) can't be modeled this way — that would need a one-to-many edge table (e.g. a `StationRoute(FromStationId, ToStationId)` join) instead of a column on `Station`. Not a requirement now; flagged so the single-FK choice isn't mistaken for a permanent decision when that scenario shows up.
 
 ## Open Questions
-
-Gaps surfaced reviewing README.md and OVERVIEW.md against the current level of design detail. Not blockers for Branch 1.2, but should be resolved or explicitly deferred before the phases that depend on them.
 
 **Resolved questions have moved to [`DECISIONS.md`](./DECISIONS.md)** — that file survives merges to `main`, unlike this one, since it holds the "why" behind the stack rather than this sprint's scope. Anything still genuinely open stays below.
 
 ### Theory of Constraints Data Dependency
-- The backlog/surplus diagnostic depends on the station-to-workflow routing graph, which is deferred past Phase 3 prerequisite work. Worth stating explicitly that Herbie-finding isn't meaningful until that graph exists.
-- Scoping decision for the demo plant's equipment/workflow patterns has moved to `DECISIONS.md` (deferred implementation to 1.2, not this sprint).
+- Cross-line/multi-line Herbie-finding still depends on the Sonnet MCP Server (1.4+) and on more than one seeded line existing to compare — single-line routing this sprint is a prerequisite, not the analysis itself.
+- The demo plant's equipment/workflow patterns (which stations, in what order, feeding which loading dock) still need to be scoped for seed data — tracked here since it's implementation-scoped for 1.3, not architectural.
