@@ -30,6 +30,21 @@ By ensuring the LLM only receives hyper-localized context or an explicit enginee
 - Claude Sonnet 5 – Underlying foundational LLM executing single-agent workflows and multi-agent loops.
 - Island Architecture – Each platform surface (web, mobile, watch, TV, etc.) is a fully self-hosted, independently runnable "Island" app, not a shared shell multiplexing between them. System- or user-level configuration decides which Island(s) are active. The current Web Island is a standalone, in-browser Blazor WebAssembly client (`Telara.Client`) served by its own thin ASP.NET Core host (`Telara.Web`), talking to the backend purely over GraphQL/HTTP. Future Islands (mobile, watch, TV) plug in as siblings under `src/Frontend/Islands/` without touching this one or the backend.
 
+# Running Locally
+
+The full stack is several independent processes — start them in this order so each one's dependencies are already listening when it boots (`Telara.OpsApi`'s background telemetry generator calls MAF on startup and will crash the host if MAF isn't up yet):
+
+1. **Internal Functionality MCP Server** – `dotnet run --project src/McpServers/Telara.Mcp.Internal` (`http://localhost:5217`)
+2. **Claude Haiku MCP Server** – `dotnet run --project src/McpServers/Telara.Mcp.Haiku` (`http://localhost:5286`)
+3. **MAF Orchestrator** – `dotnet run --project src/McpServers/Telara.Maf.Orchestrator` (`http://localhost:5009`)
+4. **Telara.OpsApi** (GraphQL API + Banana Cake Pop) – `dotnet run --project src/Backend/DotNet/Telara.OpsApi` (`https://localhost:7162`)
+5. **Telara.Web** (Blazor Web Island) – `dotnet run --project src/Frontend/Islands/Web/Telara.Web` (`http://localhost:5051`)
+
+Before step 4 the first time, or after a schema change, apply migrations:
+`dotnet ef database update --project src/Backend/DotNet/Telara.Domain --startup-project src/Backend/DotNet/Telara.OpsApi`
+
+Seed reference/demo data as needed from `Telara.SQLScripts/` (run in numeric filename order against `telara_ops`).
+
 ## Base Orchestration to MCP Server(s) managing tools and Agents
 
 This system architecture is designed to eliminate the most common failure points in enterprise AI engineering — addressing agent prompt 
