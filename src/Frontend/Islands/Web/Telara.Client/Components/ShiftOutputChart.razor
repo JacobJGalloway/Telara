@@ -31,7 +31,7 @@
     else if (_showTable)
     {
         <table class="table table-sm table-dark">
-            <thead><tr><th>Recorded</th><th>Units produced</th></tr></thead>
+            <thead><tr><th>Recorded</th><th>Cumulative units produced (shift-to-date)</th></tr></thead>
             <tbody>
                 @foreach (var p in _points.AsEnumerable().Reverse().Take(20))
                 {
