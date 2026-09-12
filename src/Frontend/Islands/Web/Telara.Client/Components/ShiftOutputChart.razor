@@ -48,7 +48,11 @@
             @for (var i = 0; i <= 4; i++)
             {
                 var y = PadTop + i * (Height - PadTop - PadBottom) / 4.0;
-                <line x1="@PadLeft" y1="@Fmt(y)" x2="@(Width - PadRight)" y2="@Fmt(y)" stroke="#2a2f3a" stroke-width="1" />
+                var value = YMax * (1 - i / 4.0m);
+                <g>
+                    <line x1="@PadLeft" y1="@Fmt(y)" x2="@(Width - PadRight)" y2="@Fmt(y)" stroke="#2a2f3a" stroke-width="1" />
+                    <text x="@(PadLeft - 6)" y="@Fmt(y + 4)" fill="#8a8f98" font-size="10" text-anchor="end">@value.ToString("0")</text>
+                </g>
             }
 
             @if (_target is not null)

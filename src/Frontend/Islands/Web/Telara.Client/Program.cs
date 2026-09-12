@@ -12,9 +12,7 @@ var opsApiBaseUrl = builder.Configuration["OpsApi:BaseUrl"]
     ?? throw new InvalidOperationException("OpsApi:BaseUrl is not configured (wwwroot/appsettings.json).");
 
 builder.Services.AddScoped<AccessTokenAccessor>();
-builder.Services.AddTransient<BearerTokenHandler>();
-builder.Services.AddHttpClient<GraphQlClient>(client => client.BaseAddress = new Uri(opsApiBaseUrl))
-    .AddHttpMessageHandler<BearerTokenHandler>();
+builder.Services.AddHttpClient<GraphQlClient>(client => client.BaseAddress = new Uri(opsApiBaseUrl));
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<TelaraAuthenticationStateProvider>();
