@@ -50,6 +50,13 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+// The Web Island (Telara.Client, Blazor WASM) is a different origin from OpsApi - AllowCredentials
+// is required ahead of client-side auth landing, since the refresh token is an HttpOnly cookie
+// (see postman-auth-testing.md), which rules out AllowAnyOrigin.
+var webIslandOrigins = builder.Configuration.GetSection("WebIsland:Origins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy("WebIsland", policy =>
+    policy.WithOrigins(webIslandOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+
 builder.AddGraphQL()
     .AddOpsApiTypes()
     .AddFiltering()
@@ -59,6 +66,7 @@ builder.AddGraphQL()
 
 var app = builder.Build();
 
+app.UseCors("WebIsland");
 app.UseAuthentication();
 app.UseAuthorization();
 
