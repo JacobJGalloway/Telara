@@ -64,6 +64,7 @@ public class GeneratorBootOrchestrator(
                     break;
 
                 await WriteReadings(instance, stoppingToken);
+                await WriteOutput(instance, stoppingToken);
             }
         }
         catch (OperationCanceledException)
@@ -136,5 +137,25 @@ public class GeneratorBootOrchestrator(
 
         if (result.IsError)
             throw new InvalidOperationException($"ingest_sensor_readings failed for {instance.Config.EquipmentId}: {result.FirstText}");
+    }
+
+    private async Task WriteOutput(GeneratorInstance instance, CancellationToken cancellationToken)
+    {
+        if (instance.Config.BaseUnitsPerTick <= 0)
+            return;
+
+        instance.CumulativeUnitsProduced += instance.Config.BaseUnitsPerTick * instance.OutputRateMultiplier;
+
+        var arguments = new Dictionary<string, object>
+        {
+            ["facilityId"] = instance.Config.FacilityId,
+            ["stationId"] = instance.Config.StationId,
+            ["unitsProduced"] = instance.CumulativeUnitsProduced,
+        };
+
+        var result = await mafClient.CallOperationalAsync("ingest_station_output", arguments, cancellationToken);
+
+        if (result.IsError)
+            throw new InvalidOperationException($"ingest_station_output failed for {instance.Config.StationId}: {result.FirstText}");
     }
 }

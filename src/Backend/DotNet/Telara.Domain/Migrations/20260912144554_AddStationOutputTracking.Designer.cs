@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Telara.Domain.Data;
 
@@ -11,9 +12,11 @@ using Telara.Domain.Data;
 namespace Telara.Domain.Migrations
 {
     [DbContext(typeof(TelaraDbContext))]
-    partial class TelaraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260912144554_AddStationOutputTracking")]
+    partial class AddStationOutputTracking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -7,4 +7,5 @@ public interface IStation
     DateTime? LastOperatorActionUtc { get; set; }
     string? NextStationId { get; set; }
     bool IsLoadingDock { get; set; }
+    decimal? TargetOutputPerShift { get; set; }
 }

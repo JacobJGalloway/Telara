@@ -77,6 +77,7 @@ public static partial class Query
             .Select(s => new WorkflowStation(
                 s.StationId,
                 s.IsLoadingDock,
+                s.TargetOutputPerShift,
                 s.Equipment
                     .Select(e => new WorkflowEquipment(
                         e.EquipmentId,
@@ -86,4 +87,12 @@ public static partial class Query
                     .ToList()))
             .ToList();
     }
+
+    // Feeds the dashboard's shift output chart (expected vs. actual) - direct MediatR, same
+    // reasoning as GetSensorReadings/GetStationWorkflow above.
+    [Authorize]
+    [UseFiltering]
+    [UseSorting]
+    public static async Task<IQueryable<StationOutputRecord>> GetStationOutput([Service] ISender mediator) =>
+        await mediator.Send(new GetStationOutputQuery());
 }

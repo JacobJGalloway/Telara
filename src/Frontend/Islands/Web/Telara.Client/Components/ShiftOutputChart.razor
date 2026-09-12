@@ -1,0 +1,263 @@
+@* Provisional colors - dark-theme placeholders matching the equipment-overview mockup's status
+   language (green/amber/red), pending Claude Design's finalized palette (1.4). *@
+@using System.Globalization
+@using System.Threading
+@implements IDisposable
+@inject GraphQlClient GraphQlClient
+
+<div class="shift-output-chart">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 mb-0">Shift Output — @StationId</h2>
+        @if (_points.Count > 0)
+        {
+            <button class="btn btn-sm btn-outline-secondary" @onclick="() => _showTable = !_showTable">
+                @(_showTable ? "Show chart" : "View as table")
+            </button>
+        }
+    </div>
+
+    @if (_loading)
+    {
+        <p class="text-muted">Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <p class="text-danger">@_error</p>
+    }
+    else if (_points.Count == 0)
+    {
+        <p class="text-muted">No output recorded yet this shift.</p>
+    }
+    else if (_showTable)
+    {
+        <table class="table table-sm table-dark">
+            <thead><tr><th>Recorded</th><th>Units produced</th></tr></thead>
+            <tbody>
+                @foreach (var p in _points.AsEnumerable().Reverse().Take(20))
+                {
+                    <tr><td>@p.RecordedAtUtc.ToLocalTime().ToString("t")</td><td>@p.UnitsProduced</td></tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <svg viewBox="0 0 @Width @Height" width="100%" role="img"
+             aria-label="Cumulative shift output: actual versus expected pace"
+             style="background:#12151c;border-radius:8px;">
+            @for (var i = 0; i <= 4; i++)
+            {
+                var y = PadTop + i * (Height - PadTop - PadBottom) / 4.0;
+                <line x1="@PadLeft" y1="@Fmt(y)" x2="@(Width - PadRight)" y2="@Fmt(y)" stroke="#2a2f3a" stroke-width="1" />
+            }
+
+            @if (_target is not null)
+            {
+                <path d="@ExpectedPathD" fill="none" stroke="#8a8f98" stroke-width="2" stroke-dasharray="6 4" />
+            }
+
+            <path d="@ActualPathD" fill="none" stroke="@ActualStatusColor" stroke-width="2" stroke-linecap="round" />
+
+            @foreach (var p in _points)
+            {
+                var x = XScale(p.RecordedAtUtc);
+                var y = YScale(p.UnitsProduced);
+                var isHovered = _hover == p;
+                <circle cx="@Fmt(x)" cy="@Fmt(y)" r="@(isHovered ? 5 : 8)"
+                        fill="@(isHovered ? "#e6e8ec" : "transparent")"
+                        stroke="@(isHovered ? ActualStatusColor : "transparent")" stroke-width="2"
+                        @onmouseenter="() => _hover = p" @onmouseleave="() => _hover = null"
+                        style="cursor:pointer;" />
+            }
+
+            <text x="@PadLeft" y="@(Height - 8)" fill="#8a8f98" font-size="11">@ShiftStartUtc.ToLocalTime().ToString("t")</text>
+            <text x="@(Width - PadRight)" y="@(Height - 8)" fill="#8a8f98" font-size="11" text-anchor="end">@DomainEndUtc.ToLocalTime().ToString("t")</text>
+
+            @if (_hover is { } hovered)
+            {
+                var x = XScale(hovered.RecordedAtUtc);
+                var expected = ExpectedAt(hovered.RecordedAtUtc);
+                var boxX = Math.Min(x + 8, Width - PadRight - 150);
+                <g>
+                    <rect x="@Fmt(boxX)" y="4" width="150" height="@(_target is null ? 18 : 36)" rx="4" fill="#1c2029" stroke="#2a2f3a" />
+                    <text x="@Fmt(boxX + 6)" y="16" fill="#e6e8ec" font-size="11">actual @hovered.UnitsProduced</text>
+                    @if (_target is not null)
+                    {
+                        <g><text x="@Fmt(boxX + 6)" y="32" fill="#8a8f98" font-size="11">expected @expected.ToString("0.#")</text></g>
+                    }
+                </g>
+            }
+        </svg>
+
+        <div class="d-flex gap-3 mt-2" style="font-size:0.85rem;">
+            <span>
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:@ActualStatusColor;margin-right:4px;"></span>
+                Actual
+            </span>
+            @if (_target is not null)
+            {
+                <span>
+                    <span style="display:inline-block;width:16px;height:2px;background:#8a8f98;margin-right:4px;vertical-align:middle;"></span>
+                    Expected pace (target @_target.Value.ToString("0.#")/shift)
+                </span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string FacilityId { get; set; } = "";
+    [Parameter, EditorRequired] public string StationId { get; set; } = "";
+
+    // No Shift entity yet (see project memory) - "shift start" is approximated as the first
+    // recorded point, and shift length is a provisional constant, not modeled data.
+    private const double ShiftHours = 8;
+
+    private const int Width = 760;
+    private const int Height = 260;
+    private const int PadLeft = 48;
+    private const int PadRight = 16;
+    private const int PadTop = 16;
+    private const int PadBottom = 32;
+
+    private List<StationOutputPoint> _points = [];
+    private decimal? _target;
+    private bool _loading = true;
+    private bool _showTable;
+    private string? _error;
+    private StationOutputPoint? _hover;
+    private Timer? _pollTimer;
+
+    private const string OutputQuery = """
+        query StationOutput($facilityId: String, $stationId: String) {
+          stationOutput(
+            where: { facilityId: { eq: $facilityId }, stationId: { eq: $stationId } }
+            order: [{ recordedAtUtc: ASC }]
+          ) {
+            recordedAtUtc
+            unitsProduced
+          }
+        }
+        """;
+
+    private const string TargetQuery = """
+        query StationTarget($facilityId: String!, $stationId: String!) {
+          stationWorkflow(facilityId: $facilityId, stationId: $stationId) {
+            targetOutputPerShift
+          }
+        }
+        """;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        // Matches the generator's GenerationInterval (appsettings' Generators:Instances) - close
+        // enough to feel live without polling faster than new data can actually arrive.
+        _pollTimer = new Timer(async _ => await InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        }), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var outputTask = GraphQlClient.SendAsync<StationOutputResponse>(OutputQuery, new { facilityId = FacilityId, stationId = StationId });
+            var targetTask = GraphQlClient.SendAsync<StationTargetResponse>(TargetQuery, new { facilityId = FacilityId, stationId = StationId });
+            await Task.WhenAll(outputTask, targetTask);
+
+            _points = outputTask.Result.StationOutput;
+            _target = targetTask.Result.StationWorkflow.FirstOrDefault()?.TargetOutputPerShift;
+            _error = null;
+        }
+        catch (GraphQlRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    public void Dispose() => _pollTimer?.Dispose();
+
+    private static string Fmt(double value) => value.ToString(CultureInfo.InvariantCulture);
+
+    private DateTime ShiftStartUtc => _points.Count > 0 ? _points[0].RecordedAtUtc : DateTime.UtcNow;
+
+    private DateTime DomainEndUtc =>
+        _points.Count > 0 && _points[^1].RecordedAtUtc > DateTime.UtcNow ? _points[^1].RecordedAtUtc : DateTime.UtcNow;
+
+    private decimal ExpectedAt(DateTime t)
+    {
+        if (_target is not { } target || target <= 0)
+            return 0;
+
+        var fraction = Math.Clamp((t - ShiftStartUtc).TotalHours / ShiftHours, 0, 1);
+        return target * (decimal)fraction;
+    }
+
+    private decimal YMax
+    {
+        get
+        {
+            var max = Math.Max(_target ?? 0, _points.Count > 0 ? _points.Max(p => p.UnitsProduced) : 0);
+            return max > 0 ? max * 1.1m : 10m;
+        }
+    }
+
+    private double XScale(DateTime t)
+    {
+        var totalSeconds = (DomainEndUtc - ShiftStartUtc).TotalSeconds;
+        var frac = totalSeconds <= 0 ? 0 : (t - ShiftStartUtc).TotalSeconds / totalSeconds;
+        return PadLeft + frac * (Width - PadLeft - PadRight);
+    }
+
+    private double YScale(decimal value)
+    {
+        var frac = (double)(value / YMax);
+        return Height - PadBottom - frac * (Height - PadTop - PadBottom);
+    }
+
+    private string ActualPathD => _points.Count == 0
+        ? ""
+        : "M " + string.Join(" L ", _points.Select(p => $"{Fmt(XScale(p.RecordedAtUtc))},{Fmt(YScale(p.UnitsProduced))}"));
+
+    private string ExpectedPathD
+    {
+        get
+        {
+            var start = ShiftStartUtc;
+            var end = DomainEndUtc;
+            return $"M {Fmt(XScale(start))},{Fmt(YScale(ExpectedAt(start)))} L {Fmt(XScale(end))},{Fmt(YScale(ExpectedAt(end)))}";
+        }
+    }
+
+    // Reuses the mockup's status vocabulary (green/amber/red) for what is here a genuine status -
+    // pace against target - not a series-identity color. Expected pace itself stays a neutral
+    // dashed reference line so the two never compete for the same hue.
+    private string ActualStatusColor
+    {
+        get
+        {
+            if (_points.Count == 0 || _target is null)
+                return "#8a8f98";
+
+            var latest = _points[^1];
+            var expected = ExpectedAt(latest.RecordedAtUtc);
+            if (expected <= 0)
+                return "#22c55e";
+
+            var ratio = (double)(latest.UnitsProduced / expected);
+            return ratio switch
+            {
+                >= 0.97 => "#22c55e",
+                >= 0.85 => "#f59e0b",
+                _ => "#ef4444",
+            };
+        }
+    }
+}

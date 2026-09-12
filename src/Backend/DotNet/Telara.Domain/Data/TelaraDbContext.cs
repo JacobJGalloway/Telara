@@ -12,6 +12,7 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
     public DbSet<Station> Stations => Set<Station>();
     public DbSet<StationEquipment> StationEquipment => Set<StationEquipment>();
     public DbSet<EquipmentType> EquipmentTypes => Set<EquipmentType>();
+    public DbSet<StationOutputRecord> StationOutputRecords => Set<StationOutputRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -86,6 +87,7 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
             entity.Property(e => e.LastOperatorActionUtc).HasColumnName("last_operator_action_utc");
             entity.Property(e => e.NextStationId).HasColumnName("next_station_id");
             entity.Property(e => e.IsLoadingDock).HasColumnName("is_loading_dock");
+            entity.Property(e => e.TargetOutputPerShift).HasColumnName("target_output_per_shift").HasPrecision(18, 4);
             entity.HasOne(e => e.NextStation)
                 .WithMany()
                 .HasForeignKey(e => new { e.FacilityId, e.NextStationId })
@@ -120,6 +122,21 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
                 .WithMany()
                 .HasForeignKey(e => e.EquipmentTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<StationOutputRecord>(entity =>
+        {
+            entity.ToTable("StationOutputRecords", "dbo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FacilityId).HasColumnName("facility_id");
+            entity.Property(e => e.StationId).HasColumnName("station_id");
+            entity.Property(e => e.RecordedAtUtc).HasColumnName("recorded_at_utc");
+            entity.Property(e => e.UnitsProduced).HasColumnName("units_produced").HasPrecision(18, 4);
+            entity.HasIndex(e => new { e.FacilityId, e.StationId, e.RecordedAtUtc });
+            entity.HasOne(e => e.Station)
+                .WithMany()
+                .HasForeignKey(e => new { e.FacilityId, e.StationId });
         });
     }
 }

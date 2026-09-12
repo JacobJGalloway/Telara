@@ -10,6 +10,12 @@
         <h1>Dashboard</h1>
         <p>Signed in as @context.User.Identity?.Name.</p>
         <button class="btn btn-outline-secondary" @onclick="HandleLogoutAsync">Log Out</button>
+
+        @* Hardcoded to the single-station demo line for now - a station selector lands once
+           the assembly-line/multi-station view exists to pick one from. *@
+        <div class="mt-4">
+            <ShiftOutputChart FacilityId="demo-facility" StationId="station-01" />
+        </div>
     </Authorized>
 </AuthorizeView>
 

@@ -9,6 +9,7 @@ public class Station : IStation
     public DateTime? LastOperatorActionUtc { get; set; }
     public string? NextStationId { get; set; }
     public bool IsLoadingDock { get; set; }
+    public decimal? TargetOutputPerShift { get; set; }
     public Station? NextStation { get; set; }
     public ICollection<StationEquipment> Equipment { get; set; } = [];
 
