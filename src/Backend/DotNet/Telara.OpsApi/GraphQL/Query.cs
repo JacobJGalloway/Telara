@@ -49,4 +49,41 @@ public static partial class Query
 
         return JsonSerializer.Deserialize<List<LatestSensorReading>>(result.FirstText, JsonOptions) ?? [];
     }
+
+    // Bulk UI-shaping read for the workflow diagram screen - direct MediatR like GetSensorReadings
+    // above, not MAF, per ARCHITECTURE.md's 1.3 "Decisions Made This Sprint".
+    [Authorize]
+    public static async Task<IReadOnlyList<WorkflowStation>> GetStationWorkflow(
+        [Service] ISender mediator,
+        string facilityId,
+        string stationId,
+        CancellationToken cancellationToken)
+    {
+        var stations = await mediator.Send(new GetStationWorkflowQuery(facilityId, stationId), cancellationToken);
+        var readings = await mediator.Send(new GetSensorReadingsQuery(), cancellationToken);
+
+        var latestByEquipment = readings
+            .Where(r => r.FacilityId == facilityId)
+            .AsEnumerable()
+            .GroupBy(r => r.EquipmentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.GroupBy(r => r.SensorId)
+                    .Select(sg => sg.OrderByDescending(r => r.ReadingAtUtc).First())
+                    .Select(r => new LatestSensorReading(r.SensorId, r.ReadingType, r.Value, r.ReadingAtUtc))
+                    .ToList() as IReadOnlyList<LatestSensorReading>);
+
+        return stations
+            .Select(s => new WorkflowStation(
+                s.StationId,
+                s.IsLoadingDock,
+                s.Equipment
+                    .Select(e => new WorkflowEquipment(
+                        e.EquipmentId,
+                        e.EquipmentType?.Name ?? string.Empty,
+                        e.Status.ToString(),
+                        latestByEquipment.GetValueOrDefault(e.EquipmentId, [])))
+                    .ToList()))
+            .ToList();
+    }
 }

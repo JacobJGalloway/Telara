@@ -84,6 +84,12 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
             entity.Property(e => e.FacilityId).HasColumnName("facility_id");
             entity.Property(e => e.StationId).HasColumnName("station_id");
             entity.Property(e => e.LastOperatorActionUtc).HasColumnName("last_operator_action_utc");
+            entity.Property(e => e.NextStationId).HasColumnName("next_station_id");
+            entity.Property(e => e.IsLoadingDock).HasColumnName("is_loading_dock");
+            entity.HasOne(e => e.NextStation)
+                .WithMany()
+                .HasForeignKey(e => new { e.FacilityId, e.NextStationId })
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<EquipmentType>(entity =>
