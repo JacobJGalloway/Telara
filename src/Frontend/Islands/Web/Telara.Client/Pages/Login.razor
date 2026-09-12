@@ -1,6 +1,66 @@
 @page "/login"
+@inject TelaraAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 
 <PageTitle>Log In</PageTitle>
 
 <h1>Log In</h1>
-<p>Placeholder - the login form wires up to the existing <code>login</code> GraphQL mutation next.</p>
+
+<EditForm Model="@model" OnValidSubmit="HandleLoginAsync" FormName="login">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="model.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" />
+    </div>
+
+    @if (errorMessage is not null)
+    {
+        <p class="text-danger">@errorMessage</p>
+    }
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">Log In</button>
+</EditForm>
+
+@code {
+    private readonly LoginModel model = new();
+    private string? errorMessage;
+    private bool isSubmitting;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private async Task HandleLoginAsync()
+    {
+        errorMessage = null;
+        isSubmitting = true;
+        try
+        {
+            await AuthStateProvider.LoginAsync(model.Email, model.Password);
+            Navigation.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/dashboard" : ReturnUrl);
+        }
+        catch (GraphQlRequestException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = "";
+    }
+}

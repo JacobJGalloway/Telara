@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Telara.Client;
@@ -10,6 +11,13 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 var opsApiBaseUrl = builder.Configuration["OpsApi:BaseUrl"]
     ?? throw new InvalidOperationException("OpsApi:BaseUrl is not configured (wwwroot/appsettings.json).");
 
-builder.Services.AddHttpClient<GraphQlClient>(client => client.BaseAddress = new Uri(opsApiBaseUrl));
+builder.Services.AddScoped<AccessTokenAccessor>();
+builder.Services.AddTransient<BearerTokenHandler>();
+builder.Services.AddHttpClient<GraphQlClient>(client => client.BaseAddress = new Uri(opsApiBaseUrl))
+    .AddHttpMessageHandler<BearerTokenHandler>();
+
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<TelaraAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<TelaraAuthenticationStateProvider>());
 
 await builder.Build().RunAsync();

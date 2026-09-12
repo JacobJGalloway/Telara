@@ -1,0 +1,22 @@
+@page "/dashboard"
+@attribute [Authorize]
+@inject TelaraAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Dashboard</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Dashboard</h1>
+        <p>Signed in as @context.User.Identity?.Name.</p>
+        <button class="btn btn-outline-secondary" @onclick="HandleLogoutAsync">Log Out</button>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private async Task HandleLogoutAsync()
+    {
+        await AuthStateProvider.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+}
