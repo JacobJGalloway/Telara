@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Threading;
 using Microsoft.AspNetCore.Components.Authorization;
 using Telara.Client.Models;
 
@@ -28,10 +29,17 @@ public class TelaraAuthenticationStateProvider(GraphQlClient graphQlClient, Acce
 
     private const string LogoutMutation = "mutation { logout }";
 
+    // Belt-and-suspenders alongside App.razor's nav-triggered check: a page that just sits open
+    // polling (e.g. ShiftOutputChart) never fires LocationChanged, so relying on navigation alone
+    // let the access token expire silently mid-session - this timer is what actually guarantees
+    // a refresh happens regardless of whether the user navigates anywhere.
+    private static readonly TimeSpan PeriodicCheckInterval = TimeSpan.FromMinutes(1);
+
     private DateTime? _accessTokenExpiresAtUtc;
     private UserProfile? _currentUser;
     private bool _triedRestore;
     private bool _refreshing;
+    private Timer? _periodicRefreshTimer;
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
@@ -39,6 +47,8 @@ public class TelaraAuthenticationStateProvider(GraphQlClient graphQlClient, Acce
         {
             _triedRestore = true;
             await TryRestoreSessionAsync();
+            _periodicRefreshTimer = new Timer(
+                async _ => await RefreshIfNeededAsync(), null, PeriodicCheckInterval, PeriodicCheckInterval);
         }
 
         return new AuthenticationState(BuildPrincipal());
@@ -62,9 +72,10 @@ public class TelaraAuthenticationStateProvider(GraphQlClient graphQlClient, Acce
         }
     }
 
-    // Fire-and-forget from App.razor on every route change - cheap when the token is still fresh
-    // (no network call), and picks up a revoked/changed role within RefreshBuffer of navigating
-    // rather than waiting out the rest of the token's lifetime.
+    // Called both by the periodic timer above and (for extra responsiveness right at nav time)
+    // by App.razor on every route change - cheap when the token is still fresh (no network call),
+    // and picks up a revoked/changed role within RefreshBuffer rather than waiting out the rest
+    // of the token's lifetime.
     public async Task RefreshIfNeededAsync()
     {
         if (_refreshing || _currentUser is null)
