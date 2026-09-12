@@ -37,7 +37,7 @@ The full stack is several independent processes — start them in this order so 
 1. **Internal Functionality MCP Server** – `dotnet run --project src/McpServers/Telara.Mcp.Internal` (`http://localhost:5217`)
 2. **Claude Haiku MCP Server** – `dotnet run --project src/McpServers/Telara.Mcp.Haiku` (`http://localhost:5286`)
 3. **MAF Orchestrator** – `dotnet run --project src/McpServers/Telara.Maf.Orchestrator` (`http://localhost:5009`)
-4. **Telara.OpsApi** (GraphQL API + Banana Cake Pop) – `dotnet run --project src/Backend/DotNet/Telara.OpsApi` (`https://localhost:7162`)
+4. **Telara.OpsApi** (GraphQL API + Banana Cake Pop) – `dotnet run --project src/Backend/DotNet/Telara.OpsApi --launch-profile https` (`https://localhost:7162`). **The `--launch-profile https` is required** — `launchSettings.json` lists the `http`-only profile first, so a bare `dotnet run` binds only `:5158` and leaves `:7162` unreachable, which is what the Web Island, the CORS policy, and the `Secure` refresh cookie all expect.
 5. **Telara.Web** (Blazor Web Island) – `dotnet run --project src/Frontend/Islands/Web/Telara.Web` (`http://localhost:5051`)
 
 Before step 4 the first time, or after a schema change, apply migrations:

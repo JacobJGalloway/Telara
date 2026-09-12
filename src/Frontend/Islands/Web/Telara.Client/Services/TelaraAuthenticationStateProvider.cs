@@ -79,10 +79,12 @@ public class TelaraAuthenticationStateProvider(GraphQlClient graphQlClient, Acce
             var response = await graphQlClient.SendAsync<RefreshTokenResponse>(RefreshTokenMutation);
             ApplyAuthPayload(response.RefreshToken);
         }
-        catch (GraphQlRequestException)
+        catch (Exception ex) when (ex is GraphQlRequestException or HttpRequestException)
         {
-            // Refresh cookie is gone/expired/revoked (e.g. an admin terminated the account) -
-            // fall back to signed-out rather than surfacing an error on an ordinary nav click.
+            // Refresh cookie is gone/expired/revoked (e.g. an admin terminated the account), or
+            // OpsApi is unreachable - either way, fall back to signed-out rather than leaving
+            // GetAuthenticationStateAsync's Task faulted, which hangs AuthorizeRouteView on its
+            // <Authorizing> template forever instead of resolving to signed-out.
             ClearSession();
         }
         finally
@@ -98,9 +100,10 @@ public class TelaraAuthenticationStateProvider(GraphQlClient graphQlClient, Acce
             var response = await graphQlClient.SendAsync<RefreshTokenResponse>(RefreshTokenMutation);
             ApplyAuthPayload(response.RefreshToken, notify: false);
         }
-        catch (GraphQlRequestException)
+        catch (Exception ex) when (ex is GraphQlRequestException or HttpRequestException)
         {
-            // No valid refresh cookie yet (first visit, or it expired) - stay signed out.
+            // No valid refresh cookie yet (first visit, it expired, or OpsApi is unreachable) -
+            // stay signed out rather than leaving this Task faulted (see RefreshIfNeededAsync).
         }
     }
 
