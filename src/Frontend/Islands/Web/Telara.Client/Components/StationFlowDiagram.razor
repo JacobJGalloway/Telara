@@ -1,0 +1,148 @@
+@* Dynamic isometric station-flow diagram - geometry reverse-engineered from the Claude Design
+   prototype's fixed 5-node SVG (Telara Station Supervisor Dashboard v2.dc.html): a diamond top
+   face plus left/right parallelogram faces per station, colored per DESIGN.md's §2 "Isometric
+   prism faces" table. Computed here for any station count returned by GetStationWorkflow rather
+   than hardcoded to one line's shape. Filling the full available space and switching orientation
+   dynamically (per DESIGN.md open item) is still 1.4 scope - this pass evenly spaces one
+   horizontal row and staggers alternating stations for the same "flow" look as the mockup. *@
+@inject GraphQlClient GraphQlClient
+
+<div class="station-flow-diagram">
+    @if (_loading)
+    {
+        <p class="text-muted">Loading workflow…</p>
+    }
+    else if (_error is not null)
+    {
+        <p class="text-danger">@_error</p>
+    }
+    else if (_stations.Count == 0)
+    {
+        <p class="text-muted">No routed line found for this station.</p>
+    }
+    else
+    {
+        <svg viewBox="0 0 @ViewWidth @ViewHeight" style="width:100%;height:auto;display:block;background:#12151c;border-radius:6px;">
+            <polyline points="@ConnectorPoints" fill="none" stroke="#6b6d74" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7" />
+
+            @for (var i = 0; i < _stations.Count; i++)
+            {
+                var s = _stations[i];
+                var (cx, cy) = Position(i);
+                var status = DeriveStatus(s);
+                var (topColor, leftColor, rightColor) = ColorsFor(status);
+
+                <g>
+                    <polygon points="@LeftFace(cx, cy)" fill="@leftColor" fill-opacity="0.5" stroke="@leftColor" stroke-width="3" stroke-linejoin="round" />
+                    <polygon points="@RightFace(cx, cy)" fill="@rightColor" fill-opacity="0.5" stroke="@rightColor" stroke-width="3" stroke-linejoin="round" />
+                    <polygon points="@TopFace(cx, cy)" fill="@topColor" fill-opacity="0.5" stroke="@topColor" stroke-width="3" stroke-linejoin="round" />
+                    <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 20)" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">@s.StationId@(s.IsLoadingDock ? " (dock)" : "")</text>
+                    <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 34)" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="@topColor">@status</text>
+                </g>
+            }
+        </svg>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string FacilityId { get; set; } = "";
+    [Parameter, EditorRequired] public string StationId { get; set; } = "";
+
+    private const int ViewWidth = 760;
+    private const int ViewHeight = 220;
+    private const int Margin = 60;
+    private const double HalfWidth = 28;
+    private const double HalfHeight = 14;
+    private const double PrismDepth = 24;
+    private const double RowOffset = 32;
+    private const double BaseTop = 70;
+
+    private List<WorkflowStation> _stations = [];
+    private bool _loading = true;
+    private string? _error;
+
+    private const string WorkflowQuery = """
+        query StationWorkflow($facilityId: String!, $stationId: String!) {
+          stationWorkflow(facilityId: $facilityId, stationId: $stationId) {
+            stationId
+            isLoadingDock
+            equipment {
+              equipmentId
+              equipmentTypeName
+              status
+            }
+          }
+        }
+        """;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var response = await GraphQlClient.SendAsync<StationWorkflowResponse>(
+                WorkflowQuery, new { facilityId = FacilityId, stationId = StationId });
+            _stations = response.StationWorkflow;
+            _error = null;
+        }
+        catch (GraphQlRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private (double cx, double cy) Position(int index)
+    {
+        var count = _stations.Count;
+        var spacing = count > 1 ? (ViewWidth - 2 * Margin) / (double)(count - 1) : 0;
+        var cx = Margin + index * spacing;
+        var cy = BaseTop + (index % 2 == 1 ? RowOffset : 0);
+        return (cx, cy);
+    }
+
+    private string ConnectorPoints => string.Join(" ", Enumerable.Range(0, _stations.Count).Select(i =>
+    {
+        var (cx, cy) = Position(i);
+        return $"{Fmt(cx)},{Fmt(cy + PrismDepth)}";
+    }));
+
+    private static string TopFace(double cx, double cy) =>
+        $"{Fmt(cx - HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy - HalfHeight)} {Fmt(cx + HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy + HalfHeight)}";
+
+    private static string LeftFace(double cx, double cy) =>
+        $"{Fmt(cx - HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy + HalfHeight)} {Fmt(cx)},{Fmt(cy + HalfHeight + PrismDepth)} {Fmt(cx - HalfWidth)},{Fmt(cy + PrismDepth)}";
+
+    private static string RightFace(double cx, double cy) =>
+        $"{Fmt(cx)},{Fmt(cy + HalfHeight)} {Fmt(cx + HalfWidth)},{Fmt(cy)} {Fmt(cx + HalfWidth)},{Fmt(cy + PrismDepth)} {Fmt(cx)},{Fmt(cy + HalfHeight + PrismDepth)}";
+
+    private static string Fmt(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    // No Herbie/constraint-reasoning service exists yet (that's the deferred Sonnet MCP Server -
+    // see ARCHITECTURE.md), so station status is a plain worst-of rollup over its own equipment:
+    // any faulted equipment makes the station critical, any idle equipment (with nothing faulted)
+    // makes it watch, otherwise operational.
+    private static string DeriveStatus(WorkflowStation station)
+    {
+        if (station.Equipment.Count == 0)
+            return "unknown";
+        if (station.Equipment.Any(e => e.Status == "Faulted"))
+            return "critical";
+        if (station.Equipment.Any(e => e.Status == "Idle"))
+            return "watch";
+        return "operational";
+    }
+
+    // Hex values match DESIGN.md §2 "Isometric prism faces" table exactly.
+    private static (string top, string left, string right) ColorsFor(string status) => status switch
+    {
+        "critical" => ("#ef5b4e", "#8a1f16", "#c93b2e"),
+        "watch" => ("#f0b429", "#8a5f08", "#c98a12"),
+        "operational" => ("#22e08f", "#0e6b46", "#189a63"),
+        _ => ("#7fb0ef", "#1c4d94", "#2f6fd6"),
+    };
+}
