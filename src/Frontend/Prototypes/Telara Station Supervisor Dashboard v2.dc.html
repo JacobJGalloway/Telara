@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  body{margin:0;background:#141416;}
+  a{color:#8fb7ef;} a:hover{color:#aecbf5;}
+</style>
+</helmet>
+
+<div style="font-family:'Inter',sans-serif;background:#141416;padding:32px 0;">
+  <div style="max-width:1440px;margin:0 auto;padding:0 24px;">
+    <div style="font-family:'Space Mono',monospace;font-size:11px;color:#6b6d74;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Initial wireframe &middot; dark &quot;control room&quot; mode</div>
+
+    <!-- ===== DARK MODE DASHBOARD ===== -->
+    <div style="background:#242424;border-radius:6px;border:1px solid #3f3f45;overflow:hidden;margin-bottom:16px;">
+
+      <div style="display:flex;">
+        <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ true }}">
+        <aside style="width:220px;flex-shrink:0;background:#1b1b1d;border-right:1px solid #3f3f45;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;min-height:106px;box-sizing:border-box;border-bottom:1px solid #3f3f45;">
+            <img src="assets/telara-lockup-dark.svg" alt="Telara" style="height:20px;"/>
+            <button onClick="{{ toggleNav }}" style="background:transparent;border:none;cursor:pointer;padding:4px;display:flex;flex-direction:column;gap:3px;">
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+            </button>
+          </div>
+          <nav style="display:flex;flex-direction:column;padding:16px 8px;gap:4px;">
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;background:rgba(143,183,239,0.12);color:#8fb7ef;font-size:14px;font-weight:500;text-decoration:none;">Dashboard</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Stations</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Personnel</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Alerts</a>
+          </nav>
+          <div style="margin-top:auto;padding:16px;border-top:1px solid #333337;display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:999px;background:#2b2b2e;border:1px solid #3f3f45;display:flex;align-items:center;justify-content:center;font-size:12px;color:#f2f3f5;font-weight:600;">MJ</div>
+            <div style="font-size:12px;color:#a7acb5;">Station Supervisor</div>
+          </div>
+        </aside>
+        </sc-if>
+        <sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}">
+        <aside style="width:64px;flex-shrink:0;background:#1b1b1d;border-right:1px solid #3f3f45;display:flex;flex-direction:column;align-items:center;">
+          <div style="padding:16px 0;min-height:106px;box-sizing:border-box;align-items:center;border-bottom:1px solid #3f3f45;width:100%;display:flex;justify-content:center;">
+            <button onClick="{{ toggleNav }}" style="background:transparent;border:none;cursor:pointer;padding:4px;display:flex;flex-direction:column;gap:3px;">
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+            </button>
+          </div>
+          <nav style="display:flex;flex-direction:column;padding:16px 0;gap:8px;align-items:center;">
+            <a href="#" title="Dashboard" style="width:36px;height:36px;border-radius:4px;background:rgba(143,183,239,0.12);color:#8fb7ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;text-decoration:none;">D</a>
+            <a href="#" title="Stations" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">S</a>
+            <a href="#" title="Personnel" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">P</a>
+            <a href="#" title="Alerts" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">A</a>
+          </nav>
+          <div style="margin-top:auto;padding:16px 0;">
+            <div style="width:32px;height:32px;border-radius:999px;background:#2b2b2e;border:1px solid #3f3f45;display:flex;align-items:center;justify-content:center;font-size:12px;color:#f2f3f5;font-weight:600;">MJ</div>
+          </div>
+        </aside>
+        </sc-if>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;height:72px;box-sizing:border-box;border-bottom:2px solid #08060d;background:#1b1b1d;">
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#f2f3f5;">Facility 01</div>
+                <div style="font-size:12px;color:#6b6d74;">Station Supervisor</div>
+              </div>
+              <div style="width:1px;height:28px;background:#3f3f45;"></div>
+              <label style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:#6b6d74;text-transform:uppercase;letter-spacing:0.06em;">Part / Sub-assembly</span>
+                <select style="font-family:'Inter',sans-serif;font-size:13px;color:#f2f3f5;background:#2b2b2e;border:1px solid #3f3f45;border-radius:4px;padding:6px 10px;min-width:190px;">
+                  <option>Bracket Assembly &mdash; A104</option>
+                  <option>Drive Housing &mdash; B220</option>
+                  <option>Panel Sub-assembly &mdash; C310</option>
+                </select>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:#6b6d74;text-transform:uppercase;letter-spacing:0.06em;">Line</span>
+                <select style="font-family:'Inter',sans-serif;font-size:13px;color:#f2f3f5;background:#2b2b2e;border:1px solid #3f3f45;border-radius:4px;padding:6px 10px;min-width:100px;">
+                  <option>Line 3</option>
+                  <option>Line 1</option>
+                  <option>Line 2</option>
+                </select>
+              </label>
+            </div>
+            <div style="font-family:'Space Mono',monospace;font-size:14px;color:#a7acb5;">13:42:07</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;padding:8px 24px;height:34px;box-sizing:border-box;background:#1b1b1d;border-bottom:1px solid #3f3f45;">
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#1ed488;font-weight:700;flex-shrink:0;">SHIFT 1</span>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#6b6d74;flex-shrink:0;">06:00</span>
+            <div style="position:relative;flex:1;height:4px;background:#333337;border-radius:999px;">
+              <div style="position:absolute;left:0;top:0;width:100%;height:4px;background:rgba(30,212,136,0.18);border-radius:999px;"></div>
+              <div style="position:absolute;left:92%;top:-6px;width:2px;height:16px;background:#1ed488;"></div>
+            </div>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#6b6d74;flex-shrink:0;">14:00</span>
+          </div>
+
+          <div style="padding:24px;">
+
+        <!-- constraint hero -->
+        <div style="background:#2b2b2e;border:1px solid #971c11;border-radius:6px;padding:18px 24px;margin-bottom:16px;box-shadow:0 0 0 1px rgba(243,153,145,0.15), 0 0 20px rgba(243,153,145,0.12);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-family:'Space Mono',monospace;font-size:11px;color:#f39991;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Constraint &middot; Herbie</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:#f2f3f5;letter-spacing:-0.02em;margin-bottom:4px;">Riveting is the constraint</div>
+              <div style="font-size:14px;color:#a7acb5;max-width:560px;line-height:1.5;">Backlog +41 units upstream &mdash; running one operator short this shift.</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:9px 16px;border-radius:4px;border:1px solid #8fb7ef;background:transparent;color:#8fb7ef;cursor:pointer;">View Station</button>
+              <button style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:9px 16px;border-radius:4px;border:1px solid transparent;background:#8fb7ef;color:#242424;cursor:pointer;">Acknowledge</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- station flow -->
+        <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:12px 24px 18px;margin-bottom:16px;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;">
+            <div style="font-size:13px;font-weight:600;color:#f2f3f5;">Line 3 &middot; station flow</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;color:#6b6d74;">isometric view &middot; proof of concept, linear only</div>
+          </div>
+          <svg viewBox="42 24 436 188" style="width:100%;height:auto;display:block;">
+<polygon points="90,96 118,110 90,124 62,110" fill="rgba(34,224,143,0.16)" stroke="#1ed488" stroke-width="1.5"/>
+<polygon points="175,138 203,152 175,166 147,152" fill="rgba(239,91,78,0.22)" stroke="#f39991" stroke-width="1.5"/>
+<polygon points="260,96 288,110 260,124 232,110" fill="rgba(34,224,143,0.16)" stroke="#1ed488" stroke-width="1.5"/>
+<polygon points="345,138 373,152 345,166 317,152" fill="rgba(240,180,41,0.2)" stroke="#d9a712" stroke-width="1.5"/>
+<polygon points="430,96 458,110 430,124 402,110" fill="rgba(127,176,239,0.18)" stroke="#8fb7ef" stroke-width="1.5"/>
+<polygon points="175,54 203,68 175,82 147,68" fill="rgba(127,176,239,0.14)" stroke="#8fb7ef" stroke-width="1.5"/>
+<rect x="52" y="126" width="416" height="10" fill="rgba(255,255,255,0.03)"/>
+<polyline points="90,110 175,152 260,110 345,152 430,110" fill="none" stroke="#6b6d74" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>
+<line x1="150" y1="72" x2="100" y2="96" stroke="#8fb7ef" stroke-width="1.5"/>
+
+    <polygon points="62,86 90,100 90,124 62,110" fill="rgba(14,107,70,0.5)" stroke="#0e6b46" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="90,100 118,86 118,110 90,124" fill="rgba(24,154,99,0.5)" stroke="#189a63" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="90,72 118,86 90,100 62,86" fill="rgba(34,224,143,0.5)" stroke="#22e08f" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="147,118 175,132 175,166 147,152" fill="rgba(138,31,22,0.5)" stroke="#8a1f16" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,132 203,118 203,152 175,166" fill="rgba(201,59,46,0.5)" stroke="#c93b2e" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,104 203,118 175,132 147,118" fill="rgba(239,91,78,0.5)" stroke="#ef5b4e" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="232,86 260,100 260,124 232,110" fill="rgba(14,107,70,0.5)" stroke="#0e6b46" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="260,100 288,86 288,110 260,124" fill="rgba(24,154,99,0.5)" stroke="#189a63" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="260,72 288,86 260,100 232,86" fill="rgba(34,224,143,0.5)" stroke="#22e08f" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="317,132 345,146 345,166 317,152" fill="rgba(138,95,8,0.5)" stroke="#8a5f08" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="345,146 373,132 373,152 345,166" fill="rgba(201,138,18,0.5)" stroke="#c98a12" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="345,118 373,132 345,146 317,132" fill="rgba(240,180,41,0.5)" stroke="#f0b429" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="402,90 430,104 430,124 402,110" fill="rgba(28,77,148,0.5)" stroke="#1c4d94" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="430,104 458,90 458,110 430,124" fill="rgba(47,111,214,0.5)" stroke="#2f6fd6" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="430,76 458,90 430,104 402,90" fill="rgba(127,176,239,0.5)" stroke="#7fb0ef" stroke-width="3" stroke-linejoin="round"/>
+    <text x="90" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Cutting</text>
+    <text x="90" y="160" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#1ed488">operational</text>
+    <text x="175" y="188" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Riveting</text>
+    <text x="175" y="202" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#f39991">backlog +41</text>
+    <text x="260" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Labeling</text>
+    <text x="260" y="160" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#1ed488">operational</text>
+    <text x="345" y="188" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Packing</text>
+    <text x="345" y="202" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#d9a712">idle 10m</text>
+    <text x="430" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Dispatch</text>
+    <text x="430" y="160" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#8fb7ef">waiting</text>
+
+    <polygon points="147,44 175,58 175,82 147,68" fill="rgba(28,77,148,0.5)" stroke="#1c4d94" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,58 203,44 203,68 175,82" fill="rgba(47,111,214,0.5)" stroke="#2f6fd6" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,30 203,44 175,58 147,44" fill="rgba(127,176,239,0.5)" stroke="#7fb0ef" stroke-width="3" stroke-linejoin="round"/>
+    <text x="207" y="50" text-anchor="start" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Raw Materials</text>
+    <text x="207" y="64" text-anchor="start" font-family="'Space Mono',monospace" font-size="10" fill="#8fb7ef">on schedule</text>
+</svg>
+        </div>
+
+        <!-- alerts + staffing -->
+        <div style="display:flex;gap:16px;">
+          <div style="flex:1.3;background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:16px;">Active alerts</div>
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #333337;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#6b6d74;width:56px;flex-shrink:0;">13:42</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(243,153,145,0.30);color:#f39991;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">CRITICAL</div>
+                <div style="font-size:14px;color:#f2f3f5;flex:1;">Riveting &mdash; backlog threshold crossed</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #333337;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#6b6d74;width:56px;flex-shrink:0;">12:58</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(245,153,61,0.22);color:#f5993d;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">WARNING</div>
+                <div style="font-size:14px;color:#f2f3f5;flex:1;">Packing idle 10+ min, waiting on Riveting</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #333337;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#6b6d74;width:56px;flex-shrink:0;">11:20</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(217,167,18,0.16);color:#d9a712;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">WATCH</div>
+                <div style="font-size:14px;color:#f2f3f5;flex:1;">QA sensor silent 6 min</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#6b6d74;width:56px;flex-shrink:0;">10:05</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(30,212,136,0.12);color:#1ed488;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">RESOLVED</div>
+                <div style="font-size:14px;color:#a7acb5;flex:1;">Cutting resumed after changeover</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1;background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:16px;">Staffing &middot; this shift</div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Cutting</span><span style="font-family:'Space Mono',monospace;color:#1ed488;">2 / 2</span></div>
+                <div style="height:6px;background:#333337;border-radius:999px;"><div style="height:6px;width:100%;background:#1ed488;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Riveting</span><span style="font-family:'Space Mono',monospace;color:#f39991;">2 / 3</span></div>
+                <div style="height:6px;background:#333337;border-radius:999px;"><div style="height:6px;width:66%;background:#f39991;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Labeling</span><span style="font-family:'Space Mono',monospace;color:#1ed488;">1 / 1</span></div>
+                <div style="height:6px;background:#333337;border-radius:999px;"><div style="height:6px;width:100%;background:#1ed488;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Packing</span><span style="font-family:'Space Mono',monospace;color:#1ed488;">1 / 1</span></div>
+                <div style="height:6px;background:#333337;border-radius:999px;"><div style="height:6px;width:100%;background:#1ed488;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Dispatch</span><span style="font-family:'Space Mono',monospace;color:#1ed488;">1 / 1</span></div>
+                <div style="height:6px;background:#333337;border-radius:999px;"><div style="height:6px;width:100%;background:#1ed488;border-radius:999px;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- future: this row can grow to a third column (per-station sensor detail: motor temp, bearing vibration, blade speed).
+             Small readouts (time-to-service, vibration) fit stacked at this size; a real chart's minimum size is bigger and
+             should expand into a modal for history/thresholds rather than resizing in place. -->
+
+
+      </div>
+      </div>
+    </div>
+    </div>
+
+    <div style="font-family:'Space Mono',monospace;font-size:11px;color:#6b6d74;text-transform:uppercase;letter-spacing:0.06em;margin:32px 0 8px;">Same screen &middot; light &quot;blueprint&quot; mode &mdash; for tablets/laptops on the floor</div>
+
+    <!-- ===== LIGHT MODE DASHBOARD ===== -->
+    <div style="background:#eeeeee;border-radius:6px;border:1px solid #d7dbe3;overflow:hidden;">
+
+      <div style="display:flex;">
+        <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ true }}">
+        <aside style="width:220px;flex-shrink:0;background:#ffffff;border-right:1px solid #d7dbe3;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;min-height:106px;box-sizing:border-box;border-bottom:1px solid #d7dbe3;">
+            <img src="assets/telara-lockup-light.svg" alt="Telara" style="height:20px;"/>
+            <button onClick="{{ toggleNav }}" style="background:transparent;border:none;cursor:pointer;padding:4px;display:flex;flex-direction:column;gap:3px;">
+              <span style="width:16px;height:2px;background:#5b5f68;"></span>
+              <span style="width:16px;height:2px;background:#5b5f68;"></span>
+              <span style="width:16px;height:2px;background:#5b5f68;"></span>
+            </button>
+          </div>
+          <nav style="display:flex;flex-direction:column;padding:16px 8px;gap:4px;">
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;background:rgba(21,73,145,0.08);color:#154991;font-size:14px;font-weight:500;text-decoration:none;">Dashboard</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#5b5f68;font-size:14px;text-decoration:none;">Stations</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#5b5f68;font-size:14px;text-decoration:none;">Personnel</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#5b5f68;font-size:14px;text-decoration:none;">Alerts</a>
+          </nav>
+          <div style="margin-top:auto;padding:16px;border-top:1px solid #eef0f3;display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:999px;background:#eeeeee;border:1px solid #d7dbe3;display:flex;align-items:center;justify-content:center;font-size:12px;color:#17181b;font-weight:600;">MJ</div>
+            <div style="font-size:12px;color:#5b5f68;">Station Supervisor</div>
+          </div>
+        </aside>
+        </sc-if>
+        <sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}">
+        <aside style="width:64px;flex-shrink:0;background:#ffffff;border-right:1px solid #d7dbe3;display:flex;flex-direction:column;align-items:center;">
+          <div style="padding:16px 0;min-height:106px;box-sizing:border-box;align-items:center;border-bottom:1px solid #d7dbe3;width:100%;display:flex;justify-content:center;">
+            <button onClick="{{ toggleNav }}" style="background:transparent;border:none;cursor:pointer;padding:4px;display:flex;flex-direction:column;gap:3px;">
+              <span style="width:16px;height:2px;background:#5b5f68;"></span>
+              <span style="width:16px;height:2px;background:#5b5f68;"></span>
+              <span style="width:16px;height:2px;background:#5b5f68;"></span>
+            </button>
+          </div>
+          <nav style="display:flex;flex-direction:column;padding:16px 0;gap:8px;align-items:center;">
+            <a href="#" title="Dashboard" style="width:36px;height:36px;border-radius:4px;background:rgba(21,73,145,0.08);color:#154991;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;text-decoration:none;">D</a>
+            <a href="#" title="Stations" style="width:36px;height:36px;border-radius:4px;color:#5b5f68;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">S</a>
+            <a href="#" title="Personnel" style="width:36px;height:36px;border-radius:4px;color:#5b5f68;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">P</a>
+            <a href="#" title="Alerts" style="width:36px;height:36px;border-radius:4px;color:#5b5f68;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">A</a>
+          </nav>
+          <div style="margin-top:auto;padding:16px 0;">
+            <div style="width:32px;height:32px;border-radius:999px;background:#eeeeee;border:1px solid #d7dbe3;display:flex;align-items:center;justify-content:center;font-size:12px;color:#17181b;font-weight:600;">MJ</div>
+          </div>
+        </aside>
+        </sc-if>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;height:72px;box-sizing:border-box;border-bottom:2px solid #08060d;background:#ffffff;">
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#17181b;">Facility 01</div>
+                <div style="font-size:12px;color:#5b5f68;">Station Supervisor</div>
+              </div>
+              <div style="width:1px;height:28px;background:#d7dbe3;"></div>
+              <label style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:#5b5f68;text-transform:uppercase;letter-spacing:0.06em;">Part / Sub-assembly</span>
+                <select style="font-family:'Inter',sans-serif;font-size:13px;color:#17181b;background:#ffffff;border:1px solid #d7dbe3;border-radius:4px;padding:6px 10px;min-width:190px;">
+                  <option>Bracket Assembly &mdash; A104</option>
+                  <option>Drive Housing &mdash; B220</option>
+                  <option>Panel Sub-assembly &mdash; C310</option>
+                </select>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:#5b5f68;text-transform:uppercase;letter-spacing:0.06em;">Line</span>
+                <select style="font-family:'Inter',sans-serif;font-size:13px;color:#17181b;background:#ffffff;border:1px solid #d7dbe3;border-radius:4px;padding:6px 10px;min-width:100px;">
+                  <option>Line 3</option>
+                  <option>Line 1</option>
+                  <option>Line 2</option>
+                </select>
+              </label>
+            </div>
+            <div style="font-family:'Space Mono',monospace;font-size:14px;color:#5b5f68;">13:42:07</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;padding:8px 24px;height:34px;box-sizing:border-box;background:#ffffff;border-bottom:1px solid #d7dbe3;">
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#0d5939;font-weight:700;flex-shrink:0;">SHIFT 1</span>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#5b5f68;flex-shrink:0;">06:00</span>
+            <div style="position:relative;flex:1;height:4px;background:#eef0f3;border-radius:999px;">
+              <div style="position:absolute;left:0;top:0;width:100%;height:4px;background:rgba(13,89,57,0.12);border-radius:999px;"></div>
+              <div style="position:absolute;left:92%;top:-6px;width:2px;height:16px;background:#0d5939;"></div>
+            </div>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#5b5f68;flex-shrink:0;">14:00</span>
+          </div>
+
+          <div style="padding:24px;background-image:linear-gradient(#c9d3e6 1px, transparent 1px),linear-gradient(90deg, #c9d3e6 1px, transparent 1px);background-size:24px 24px;background-color:#eeeeee;">
+
+        <div style="background:#ffffff;border:1px solid #971c11;border-radius:6px;padding:18px 24px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-family:'Space Mono',monospace;font-size:11px;color:#971c11;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Constraint &middot; Herbie</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:#17181b;letter-spacing:-0.02em;margin-bottom:4px;">Riveting is the constraint</div>
+              <div style="font-size:14px;color:#5b5f68;max-width:560px;line-height:1.5;">Backlog +41 units upstream &mdash; running one operator short this shift.</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:9px 16px;border-radius:4px;border:1px solid #154991;background:transparent;color:#154991;cursor:pointer;">View Station</button>
+              <button style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:9px 16px;border-radius:4px;border:1px solid transparent;background:#154991;color:#eeeeee;cursor:pointer;">Acknowledge</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #d7dbe3;border-radius:6px;padding:12px 24px 18px;margin-bottom:16px;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;">
+            <div style="font-size:13px;font-weight:600;color:#17181b;">Line 3 &middot; station flow</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;color:#5b5f68;">isometric view &middot; proof of concept, linear only</div>
+          </div>
+          <svg viewBox="42 24 436 188" style="width:100%;height:auto;display:block;">
+<polygon points="90,96 118,110 90,124 62,110" fill="rgba(34,224,143,0.16)" stroke="#1ed488" stroke-width="1.5"/>
+<polygon points="175,138 203,152 175,166 147,152" fill="rgba(239,91,78,0.22)" stroke="#f39991" stroke-width="1.5"/>
+<polygon points="260,96 288,110 260,124 232,110" fill="rgba(34,224,143,0.16)" stroke="#1ed488" stroke-width="1.5"/>
+<polygon points="345,138 373,152 345,166 317,152" fill="rgba(240,180,41,0.2)" stroke="#d9a712" stroke-width="1.5"/>
+<polygon points="430,96 458,110 430,124 402,110" fill="rgba(127,176,239,0.18)" stroke="#8fb7ef" stroke-width="1.5"/>
+<polygon points="175,54 203,68 175,82 147,68" fill="rgba(127,176,239,0.14)" stroke="#8fb7ef" stroke-width="1.5"/>
+<rect x="52" y="126" width="416" height="10" fill="rgba(21,73,145,0.05)"/>
+<polyline points="90,110 175,152 260,110 345,152 430,110" fill="none" stroke="#6b6d74" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>
+<line x1="150" y1="72" x2="100" y2="96" stroke="#8fb7ef" stroke-width="1.5"/>
+
+    <polygon points="62,86 90,100 90,124 62,110" fill="rgba(14,107,70,0.5)" stroke="#0e6b46" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="90,100 118,86 118,110 90,124" fill="rgba(24,154,99,0.5)" stroke="#189a63" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="90,72 118,86 90,100 62,86" fill="rgba(34,224,143,0.5)" stroke="#22e08f" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="147,118 175,132 175,166 147,152" fill="rgba(138,31,22,0.5)" stroke="#8a1f16" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,132 203,118 203,152 175,166" fill="rgba(201,59,46,0.5)" stroke="#c93b2e" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,104 203,118 175,132 147,118" fill="rgba(239,91,78,0.5)" stroke="#ef5b4e" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="232,86 260,100 260,124 232,110" fill="rgba(14,107,70,0.5)" stroke="#0e6b46" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="260,100 288,86 288,110 260,124" fill="rgba(24,154,99,0.5)" stroke="#189a63" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="260,72 288,86 260,100 232,86" fill="rgba(34,224,143,0.5)" stroke="#22e08f" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="317,132 345,146 345,166 317,152" fill="rgba(138,95,8,0.5)" stroke="#8a5f08" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="345,146 373,132 373,152 345,166" fill="rgba(201,138,18,0.5)" stroke="#c98a12" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="345,118 373,132 345,146 317,132" fill="rgba(240,180,41,0.5)" stroke="#f0b429" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="402,90 430,104 430,124 402,110" fill="rgba(28,77,148,0.5)" stroke="#1c4d94" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="430,104 458,90 458,110 430,124" fill="rgba(47,111,214,0.5)" stroke="#2f6fd6" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="430,76 458,90 430,104 402,90" fill="rgba(127,176,239,0.5)" stroke="#7fb0ef" stroke-width="3" stroke-linejoin="round"/>
+    <text x="90" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#17181b">Cutting</text>
+    <text x="90" y="160" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#0d5939">operational</text>
+    <text x="175" y="188" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#17181b">Riveting</text>
+    <text x="175" y="202" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#971c11">backlog +41</text>
+    <text x="260" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#17181b">Labeling</text>
+    <text x="260" y="160" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#0d5939">operational</text>
+    <text x="345" y="188" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#17181b">Packing</text>
+    <text x="345" y="202" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#794006">idle 10m</text>
+    <text x="430" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#17181b">Dispatch</text>
+    <text x="430" y="160" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="#154991">waiting</text>
+
+    <polygon points="147,44 175,58 175,82 147,68" fill="rgba(28,77,148,0.5)" stroke="#1c4d94" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,58 203,44 203,68 175,82" fill="rgba(47,111,214,0.5)" stroke="#2f6fd6" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="175,30 203,44 175,58 147,44" fill="rgba(127,176,239,0.5)" stroke="#7fb0ef" stroke-width="3" stroke-linejoin="round"/>
+    <text x="207" y="50" text-anchor="start" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#17181b">Raw Materials</text>
+    <text x="207" y="64" text-anchor="start" font-family="'Space Mono',monospace" font-size="10" fill="#154991">on schedule</text>
+</svg>
+        </div>
+
+        <div style="display:flex;gap:16px;">
+          <div style="flex:1.3;background:#ffffff;border:1px solid #d7dbe3;border-radius:6px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;color:#17181b;margin-bottom:16px;">Active alerts</div>
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eef0f3;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#5b5f68;width:56px;flex-shrink:0;">13:42</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(151,28,17,0.14);color:#971c11;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">CRITICAL</div>
+                <div style="font-size:14px;color:#17181b;flex:1;">Riveting &mdash; backlog threshold crossed</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eef0f3;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#5b5f68;width:56px;flex-shrink:0;">12:58</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(121,64,6,0.12);color:#794006;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">WARNING</div>
+                <div style="font-size:14px;color:#17181b;flex:1;">Packing idle 10+ min, waiting on Riveting</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eef0f3;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#5b5f68;width:56px;flex-shrink:0;">11:20</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(99,76,8,0.10);color:#634c08;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">WATCH</div>
+                <div style="font-size:14px;color:#17181b;flex:1;">QA sensor silent 6 min</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;">
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:#5b5f68;width:56px;flex-shrink:0;">10:05</div>
+                <div style="padding:3px 8px;border-radius:2px;background:rgba(13,89,57,0.08);color:#0d5939;font-size:11px;font-family:'Space Mono',monospace;flex-shrink:0;">RESOLVED</div>
+                <div style="font-size:14px;color:#5b5f68;flex:1;">Cutting resumed after changeover</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:1;background:#ffffff;border:1px solid #d7dbe3;border-radius:6px;padding:24px;">
+            <div style="font-size:13px;font-weight:600;color:#17181b;margin-bottom:16px;">Staffing &middot; this shift</div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#17181b;">Cutting</span><span style="font-family:'Space Mono',monospace;color:#0d5939;">2 / 2</span></div>
+                <div style="height:6px;background:#eef0f3;border-radius:999px;"><div style="height:6px;width:100%;background:#0d5939;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#17181b;">Riveting</span><span style="font-family:'Space Mono',monospace;color:#971c11;">2 / 3</span></div>
+                <div style="height:6px;background:#eef0f3;border-radius:999px;"><div style="height:6px;width:66%;background:#971c11;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#17181b;">Labeling</span><span style="font-family:'Space Mono',monospace;color:#0d5939;">1 / 1</span></div>
+                <div style="height:6px;background:#eef0f3;border-radius:999px;"><div style="height:6px;width:100%;background:#0d5939;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#17181b;">Packing</span><span style="font-family:'Space Mono',monospace;color:#0d5939;">1 / 1</span></div>
+                <div style="height:6px;background:#eef0f3;border-radius:999px;"><div style="height:6px;width:100%;background:#0d5939;border-radius:999px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#17181b;">Dispatch</span><span style="font-family:'Space Mono',monospace;color:#0d5939;">1 / 1</span></div>
+                <div style="height:6px;background:#eef0f3;border-radius:999px;"><div style="height:6px;width:100%;background:#0d5939;border-radius:999px;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- future: this row can grow to a third column (per-station sensor detail: motor temp, bearing vibration, blade speed).
+             Small readouts (time-to-service, vibration) fit stacked at this size; a real chart's minimum size is bigger and
+             should expand into a modal for history/thresholds rather than resizing in place. -->
+
+
+      </div>
+      </div>
+    </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { navOpen: true };
+  renderVals() {
+    return {
+      navOpen: this.state.navOpen,
+      navCollapsed: !this.state.navOpen,
+      toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
+    };
+  }
+}
+</script>
+</body>
+</html>
