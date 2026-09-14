@@ -43,7 +43,7 @@ The full stack is several independent processes — start them in this order so 
 Before step 4 the first time, or after a schema change, apply migrations:
 `dotnet ef database update --project src/Backend/DotNet/Telara.Domain --startup-project src/Backend/DotNet/Telara.OpsApi`
 
-Seed reference/demo data as needed from `Telara.SQLScripts/` (run in numeric filename order against `telara_ops`).
+Seed reference/demo data as needed from `Telara.SQLScripts/` (run in numeric filename order against `telara_ops`). To log into the three role-scoped dashboards, run at least through `006.SeedDemoUsersForDashboardRoles.sql`, which adds `shift.manager@telara.demo` and `plant.director@telara.demo` (password `password123` for both); the Station Supervisor login is whichever demo user `001.SeedUsersTable-Demo.sql` already seeded.
 
 ## Base Orchestration to MCP Server(s) managing tools and Agents
 
