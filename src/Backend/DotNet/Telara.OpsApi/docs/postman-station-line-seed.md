@@ -19,20 +19,22 @@ sprint).
 `POST https://localhost:7162/graphql`
 
 ```graphql
-mutation Register($facilityId: String!, $stationId: String!) {
-  registerStation(facilityId: $facilityId, stationId: $stationId) {
+mutation Register($facilityId: String!, $stationId: String!, $predecessorStationIds: [String!], $isLoadingDock: Boolean!) {
+  registerStation(facilityId: $facilityId, stationId: $stationId, predecessorStationIds: $predecessorStationIds, isLoadingDock: $isLoadingDock) {
     facilityId
     stationId
+    isLoadingDock
+    predecessorStationIds
   }
 }
 ```
 
-Run once per station, `facilityId = "FAC-001"`, `stationId` in order:
+Run once per station, `facilityId = "FAC-001"`, `stationId` in order, `predecessorStationIds: []` and `isLoadingDock: false` except where noted:
 
-1. `ST-INTAKE`
-2. `ST-ASSEMBLY`
-3. `ST-PACK`
-4. `ST-DOCK`
+1. `ST-INTAKE` — `predecessorStationIds: []`
+2. `ST-ASSEMBLY` — `predecessorStationIds: ["ST-INTAKE"]`
+3. `ST-PACK` — `predecessorStationIds: ["ST-ASSEMBLY"]`
+4. `ST-DOCK` — `predecessorStationIds: ["ST-PACK"]`, `isLoadingDock: true`
 
 ## 2. Register each station's equipment
 
@@ -67,12 +69,14 @@ station is enough to exercise the workflow diagram/`GetStationWorkflow`:
 | `ST-PACK`      | `EQ-PACK-01`    | Scanner       |
 | `ST-DOCK`      | `EQ-DOCK-01`    | Packer        |
 
-## 3. Wire the routing
+## 3. Routing is wired by step 1
 
-`RegisterStation`/`RegisterStationEquipment` don't own `NextStationId`/`IsLoadingDock` (no
-mutation exists for that field yet - it's a 1.3 data addition, not an operational write). Run
-`003.SeedStationRouting-Demo.sql` after step 2 to chain `ST-INTAKE -> ST-ASSEMBLY -> ST-PACK ->
-ST-DOCK` and mark `ST-DOCK` as the loading dock.
+`RegisterStation` now owns `NextStationId`/`IsLoadingDock` directly via `predecessorStationIds`/
+`isLoadingDock` - each predecessor listed in step 1 has its `NextStationId` pointed at the new
+station as part of registering it, so no separate routing step is needed for a line registered
+this way. `003.SeedStationRouting-Demo.sql` remains only as the historical record of how this
+specific demo line's routing was stitched by hand before the mutation existed - a fresh line
+doesn't need it.
 
 ## Verify
 

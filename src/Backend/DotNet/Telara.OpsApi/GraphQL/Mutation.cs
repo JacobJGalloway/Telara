@@ -36,6 +36,8 @@ public static partial class Mutation
         [Service] MafClient mafClient,
         string facilityId,
         string stationId,
+        IReadOnlyList<string>? predecessorStationIds,
+        bool isLoadingDock,
         CancellationToken cancellationToken) =>
         await CallMafAndUnwrap<RegisterStationResult>(
             mafClient,
@@ -45,6 +47,8 @@ public static partial class Mutation
             {
                 ["facilityId"] = facilityId,
                 ["stationId"] = stationId,
+                ["predecessorStationIds"] = predecessorStationIds ?? [],
+                ["isLoadingDock"] = isLoadingDock,
             },
             cancellationToken);
 
@@ -82,7 +86,7 @@ public static partial class Mutation
         if (result.IsError)
         {
             var text = result.FirstText ?? $"{toolName} failed.";
-            var code = text.Contains("already registered") || text.Contains("already exists")
+            var code = text.Contains("already registered") || text.Contains("already exists") || text.Contains("cannot feed into a new successor")
                 ? "CONFLICT"
                 : text.Contains("is not registered")
                     ? "NOT_FOUND"

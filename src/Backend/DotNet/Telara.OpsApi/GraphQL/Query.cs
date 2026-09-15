@@ -95,4 +95,23 @@ public static partial class Query
     [UseSorting]
     public static async Task<IQueryable<StationOutputRecord>> GetStationOutput([Service] ISender mediator) =>
         await mediator.Send(new GetStationOutputQuery());
+
+    // Feeds the Station registration form's predecessor picker - a station is eligible as a
+    // predecessor when it doesn't already have a successor and isn't a loading dock (see
+    // RegisterStationCommandHandler). Direct MediatR, same reasoning as GetStationOutput above.
+    [Authorize]
+    public static async Task<IReadOnlyList<StationSummary>> GetStations(
+        [Service] ISender mediator, string facilityId, CancellationToken cancellationToken)
+    {
+        var stations = await mediator.Send(new GetStationsQuery(facilityId), cancellationToken);
+        return stations.Select(s => new StationSummary(s.StationId, s.IsLoadingDock, s.NextStationId)).ToList();
+    }
+
+    // EquipmentTypes is a plain reference table with no owning service (see
+    // postman-station-line-seed.md) - feeds the StationEquipment registration form's type picker.
+    [Authorize]
+    [UseFiltering]
+    [UseSorting]
+    public static async Task<IQueryable<EquipmentType>> GetEquipmentTypes([Service] ISender mediator) =>
+        await mediator.Send(new GetEquipmentTypesQuery());
 }
