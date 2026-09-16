@@ -11,7 +11,9 @@ public class InternalMcpClientProvider(IOptions<HaikuOptions> options)
     private readonly SemaphoreSlim _gate = new(1, 1);
     private McpClient? _client;
 
-    public async Task<McpClient> GetClientAsync(CancellationToken cancellationToken)
+    // Virtual so tests can substitute a mocked McpClient without standing up a real HTTP transport -
+    // see Telara.Mcp.Haiku.Tests.Clients.FakeInternalMcpClientProvider.
+    public virtual async Task<McpClient> GetClientAsync(CancellationToken cancellationToken)
     {
         if (_client is not null)
             return _client;

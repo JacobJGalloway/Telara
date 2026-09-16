@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="../../Tests/DotNet/Telara.Core.Tests/Telara.Core.Tests.csproj" />
   <Project Path="../../Tests/DotNet/Telara.Domain.Tests/Telara.Domain.Tests.csproj" />
+  <Project Path="../../Tests/DotNet/Telara.Mcp.Haiku.Tests/Telara.Mcp.Haiku.Tests.csproj" />
   <Project Path="../../Tests/DotNet/Telara.Mcp.Internal.Tests/Telara.Mcp.Internal.Tests.csproj" />
   <Project Path="../../Tests/DotNet/Telara.OpsApi.Tests/Telara.OpsApi.Tests.csproj" />
   <Project Path="Telara.Core/Telara.Core.csproj" />
