@@ -1,31 +1,40 @@
 @page "/login"
+@layout LoginLayout
 @inject TelaraAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
 <PageTitle>Log In</PageTitle>
 
-<h1>Log In</h1>
-
-<EditForm Model="@model" OnValidSubmit="HandleLoginAsync" FormName="login">
-    <DataAnnotationsValidator />
-
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <InputText id="email" class="form-control" @bind-Value="model.Email" />
+<div class="login-wrapper">
+    <div class="login-logo">
+        <img src="assets/telara-lockup-light.svg" alt="Telara" />
     </div>
 
-    <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" />
+    <div class="card login-card">
+        <div class="card-body">
+            <EditForm Model="@model" OnValidSubmit="HandleLoginAsync" FormName="login">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <InputText id="email" class="form-control" @bind-Value="model.Email" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" />
+                </div>
+
+                @if (errorMessage is not null)
+                {
+                    <p class="text-danger">@errorMessage</p>
+                }
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">Log In</button>
+            </EditForm>
+        </div>
     </div>
-
-    @if (errorMessage is not null)
-    {
-        <p class="text-danger">@errorMessage</p>
-    }
-
-    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">Log In</button>
-</EditForm>
+</div>
 
 @code {
     private readonly LoginModel model = new();
