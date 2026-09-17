@@ -131,3 +131,12 @@ This maps onto README's orchestration diagram (Server A auto-scales under load, 
 **Also fixed while migrating:** the EF model's `StationEquipment` → `EquipmentType` foreign key defaulted to `ReferentialAction.Cascade` (EF Core's default for a required FK). Left as-is, deleting one `EquipmentTypes` reference row (e.g., "Drill Press") would have cascade-deleted every piece of equipment of that type and, transitively, all its `SensorReadings`. Changed to `DeleteBehavior.Restrict` — a lookup-table row can't be deleted while anything still references it.
 
 **Still open, not resolved here:** exact tool inventory per server — which specific lookups/workflows belong to which of the three — is deferred until MCP implementation actually starts in Branch 1.2.
+
+## Employee Domain Model & StationEquipment Shape — planned for 1.4/1.5 (2026-09-17)
+Not implemented yet — this is a forward-looking scope note, written now so it isn't rediscovered from scratch when the Employee model actually gets picked up.
+
+The Station Supervisor dashboard prototype's "Staffing · this shift" panel and "Active alerts" panel both depend on domain concepts that don't exist yet: no `Alert` entity, no `Employee`/staffing entity, and no assignment of an Employee to a `StationEquipment` slot. Building that out surfaced a naming question: not every `StationEquipment` row is a powered machine — some (e.g. "Packing," "Labeling" in the prototype) are manual work areas where a human performs an action by hand, with no sensor telemetry at all.
+
+**Resolved: `StationEquipment` stays one entity, not split into a separate `WorkArea` concept**, since its columns (`LastSensorReadingUtc` etc.) are already nullable and tolerate a manual slot simply never accruing sensor data — same table, same `StationSequence`/lease/status machinery either way. This also means `Employee`-to-slot assignment (for staffing tracking and plant-hierarchy/location tracking) targets `StationEquipment` uniformly, automated or not.
+
+**Planned natural iteration once manual-vs-automated needs more than a nullable field or two:** split via the interface pattern already established for other domain models (`Station : IStation`) — `ManualStationEquipment`, `ControlledStationEquipment`, and `AutomatedStationEquipment` all implementing `IStationEquipment`, rather than widening one class indefinitely to hold every variant's properties. Not committed now; flagged so the single-entity choice isn't mistaken for permanent when that need shows up.
