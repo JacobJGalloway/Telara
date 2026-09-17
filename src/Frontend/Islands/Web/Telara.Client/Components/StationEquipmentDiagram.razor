@@ -133,13 +133,17 @@
 
     private record RowNode(WorkflowEquipment? Equipment, string? Label);
 
-    // The station's own downstream terminus - Dispatch when it's a loading dock, Transfer
-    // otherwise (feeding the next station in the line) - same boundary vocabulary as
-    // StationFlowDiagram, applied at equipment scope instead of station scope.
+    // Every station has its own Dispatch box - the outbound staging area past its last equipment
+    // step - regardless of whether IsLoadingDock makes this station the whole line's terminus.
+    // From the Station Supervisor's seat, once a part leaves the last equipment step it's in
+    // their own Dispatch queue and it's Dispatch's problem from there (whether the next hop is
+    // another station or the real facility loading dock is invisible at this altitude) - unlike
+    // StationFlowDiagram's line-level "Transfer" vs. "Dispatch" distinction, which is about the
+    // *line's* terminus, not this station's own local hand-off point.
     private List<RowNode> BuildRow()
     {
         var row = _station!.Equipment.Select(e => new RowNode(e, null)).ToList();
-        row.Add(new RowNode(null, _station.IsLoadingDock ? "Dispatch" : "Transfer"));
+        row.Add(new RowNode(null, "Dispatch"));
         return row;
     }
 
