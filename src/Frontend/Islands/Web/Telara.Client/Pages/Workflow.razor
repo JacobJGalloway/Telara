@@ -5,8 +5,10 @@
 
 <h1>Workflow</h1>
 
-@* Hardcoded to the single-line demo (FAC-001, ST-INTAKE -> ST-ASSEMBLY -> ST-PACK -> ST-DOCK,
-   seeded via 003.SeedStationRouting-Demo.sql) for now - a line/station selector lands once the
-   multi-line domain model exists to pick one from, same reasoning as Dashboard.razor's
-   hardcoded demo-facility/station-01. *@
-<StationFlowDiagram FacilityId="FAC-001" StationId="ST-INTAKE" />
+@* Hardcoded to the single-line demo (FAC-001, ST-INTAKE) for now - a line/station selector lands
+   once the multi-line domain model exists to pick one from, same reasoning as Dashboard.razor's
+   hardcoded demo-facility/station-01.
+   This is the Station Supervisor's own equipment-level view (see ARCHITECTURE.md's 2026-09-17
+   role-hierarchy decision) - StationFlowDiagram's station-to-station line view is the Shift
+   Manager's altitude instead, and doesn't have its own route yet. *@
+<StationEquipmentDiagram FacilityId="FAC-001" StationId="ST-INTAKE" />
