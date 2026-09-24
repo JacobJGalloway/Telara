@@ -1,5 +1,5 @@
 @page "/stations"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Station Supervisor")]
 @inject GraphQlClient GraphQlClient
 
 <PageTitle>Stations</PageTitle>
