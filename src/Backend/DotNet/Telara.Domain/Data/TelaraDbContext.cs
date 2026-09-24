@@ -80,7 +80,15 @@ public class TelaraDbContext(DbContextOptions<TelaraDbContext> options) : DbCont
 
         modelBuilder.Entity<Station>(entity =>
         {
-            entity.ToTable("Stations", "dbo");
+            // Backstop for raw-SQL seeding (Telara.SQLScripts writes next_station_id/is_loading_dock
+            // directly, bypassing RegisterStationCommandHandler's predecessor-link validation) -
+            // catches a self-referencing loop and a station simultaneously claiming to be a line's
+            // terminus while still pointing at a successor.
+            entity.ToTable("Stations", "dbo", t =>
+            {
+                t.HasCheckConstraint("CK_Stations_NextStationId_NotSelf", "[next_station_id] IS NULL OR [next_station_id] <> [station_id]");
+                t.HasCheckConstraint("CK_Stations_LoadingDock_NoSuccessor", "NOT ([is_loading_dock] = 1 AND [next_station_id] IS NOT NULL)");
+            });
             entity.HasKey(e => new { e.FacilityId, e.StationId });
             entity.Property(e => e.FacilityId).HasColumnName("facility_id");
             entity.Property(e => e.StationId).HasColumnName("station_id");
