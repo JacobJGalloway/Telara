@@ -10,4 +10,9 @@ public class GeneratorInstanceConfig
     public TimeSpan LeaseDuration { get; set; } = TimeSpan.FromMinutes(15);
     public TimeSpan GenerationInterval { get; set; } = TimeSpan.FromMinutes(15);
     public List<SensorConfig> Sensors { get; set; } = [];
+
+    // Baseline units produced per generation tick at StationId, before the simulator's
+    // OutputRateMultiplier is applied - 0 (default) means this instance doesn't simulate
+    // station output at all, only sensor telemetry.
+    public decimal BaseUnitsPerTick { get; set; }
 }

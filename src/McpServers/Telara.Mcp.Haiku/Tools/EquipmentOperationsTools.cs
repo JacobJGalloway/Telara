@@ -68,4 +68,26 @@ public static class EquipmentOperationsTools
             },
             cancellationToken);
     }
+
+    [McpServerTool(Name = "ingest_station_output")]
+    [Description("Drives the station-output workflow: hands a cumulative units-produced snapshot off to the Internal Functionality Server for persistence. Haiku's own tools never touch the domain model directly.")]
+    public static async Task<string> IngestStationOutput(
+        InternalMcpClientProvider internalClientProvider,
+        [Description("Facility identifier")] string facilityId,
+        [Description("Station identifier")] string stationId,
+        [Description("Cumulative units produced so far this shift")] decimal unitsProduced,
+        CancellationToken cancellationToken)
+    {
+        var client = await internalClientProvider.GetClientAsync(cancellationToken);
+
+        return await client.CallAndUnwrapAsync(
+            "record_station_output",
+            new Dictionary<string, object>
+            {
+                ["facilityId"] = facilityId,
+                ["stationId"] = stationId,
+                ["unitsProduced"] = unitsProduced,
+            },
+            cancellationToken);
+    }
 }

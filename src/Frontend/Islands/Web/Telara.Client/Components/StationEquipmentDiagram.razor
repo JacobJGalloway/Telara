@@ -1,0 +1,213 @@
+@* Station Supervisor's equipment-level diagram - one box per StationEquipment row within a single
+   station, matching the prototype's actual 5-node layout (Cutting/Riveting/Labeling/Packing/
+   Dispatch - see "Telara Station Supervisor Dashboard v2.dc.html") exactly, as opposed to
+   StationFlowDiagram's station-to-station line view (that one box = one Station, used for the
+   Shift Manager's line-level altitude - see ARCHITECTURE.md's 2026-09-17 role-hierarchy decision).
+   Reuses the same stationWorkflow query as StationFlowDiagram, but only reads the first entry
+   (the requested station itself) rather than walking the NextStationId chain.
+   Equipment box order: whatever order the backend returns StationEquipment rows in - there's no
+   explicit sequence/position field on StationEquipment yet (despite ARCHITECTURE.md's "linear
+   since 1.2" reference to one - that field doesn't actually exist in the current schema), so this
+   is registration order, not a guaranteed physical layout. Flagged, not fixed, here. *@
+@inject GraphQlClient GraphQlClient
+
+<div class="station-equipment-diagram" style="position:relative;">
+    @if (_loading)
+    {
+        <p class="text-muted">Loading station…</p>
+    }
+    else if (_error is not null)
+    {
+        <p class="text-danger">@_error</p>
+    }
+    else if (_station is null)
+    {
+        <p class="text-muted">Station not found.</p>
+    }
+    else
+    {
+        var row = BuildRow();
+
+        <svg viewBox="0 -20 @ViewWidth @(ViewHeight + 20)" style="width:100%;height:auto;display:block;background:#12151c;border-radius:6px;">
+            <polyline points="@ConnectorPoints(row.Count)" fill="none" stroke="#6b6d74" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7" />
+
+            @for (var i = 0; i < row.Count; i++)
+            {
+                var node = row[i];
+                var (cx, cy) = Position(i, row.Count);
+
+                if (node.Equipment is { } eq)
+                {
+                    var (topColor, leftColor, rightColor) = ColorsFor(eq.Status);
+
+                    <g @onmouseenter="() => _hoverEquipmentId = eq.EquipmentId" @onmouseleave="() => _hoverEquipmentId = null" style="cursor:pointer;">
+                        <polygon points="@LeftFace(cx, cy)" fill="@leftColor" fill-opacity="0.5" stroke="@leftColor" stroke-width="3" stroke-linejoin="round" />
+                        <polygon points="@RightFace(cx, cy)" fill="@rightColor" fill-opacity="0.5" stroke="@rightColor" stroke-width="3" stroke-linejoin="round" />
+                        <polygon points="@TopFace(cx, cy)" fill="@topColor" fill-opacity="0.5" stroke="@topColor" stroke-width="3" stroke-linejoin="round" />
+                        <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 20)" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">@eq.EquipmentTypeName</text>
+                        <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 34)" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="@topColor">@eq.Status.ToLowerInvariant()</text>
+                    </g>
+
+                    @if (_hoverEquipmentId == eq.EquipmentId)
+                    {
+                        @RenderTooltip(cx, cy, eq)
+                    }
+                }
+                else
+                {
+                    <g>
+                        <polygon points="@LeftFace(cx, cy)" fill="@BoundaryColors.left" fill-opacity="0.5" stroke="@BoundaryColors.left" stroke-width="3" stroke-linejoin="round" />
+                        <polygon points="@RightFace(cx, cy)" fill="@BoundaryColors.right" fill-opacity="0.5" stroke="@BoundaryColors.right" stroke-width="3" stroke-linejoin="round" />
+                        <polygon points="@TopFace(cx, cy)" fill="@BoundaryColors.top" fill-opacity="0.5" stroke="@BoundaryColors.top" stroke-width="3" stroke-linejoin="round" />
+                        <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 20)" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">@node.Label</text>
+                    </g>
+                }
+            }
+        </svg>
+    }
+
+    <SensorTrendModal FacilityId="@FacilityId" StationId="@StationId" EquipmentId="@_trendEquipmentId"
+                       EquipmentTypeName="@_trendEquipmentTypeName" OnClose="@(() => _trendEquipmentId = null)" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string FacilityId { get; set; } = "";
+    [Parameter, EditorRequired] public string StationId { get; set; } = "";
+
+    private const int ViewWidth = 620;
+    private const int ViewHeight = 220;
+    private const int Margin = 60;
+    private const double HalfWidth = 28;
+    private const double HalfHeight = 14;
+    private const double PrismDepth = 24;
+    private const double RowOffset = 32;
+    private const double BaseTop = 70;
+
+    private static readonly (string top, string left, string right) BoundaryColors = ("#7fb0ef", "#1c4d94", "#2f6fd6");
+
+    private WorkflowStation? _station;
+    private bool _loading = true;
+    private string? _error;
+    private string? _hoverEquipmentId;
+    private string? _trendEquipmentId;
+    private string _trendEquipmentTypeName = "";
+
+    private const string StationQuery = """
+        query StationEquipmentView($facilityId: String!, $stationId: String!) {
+          stationWorkflow(facilityId: $facilityId, stationId: $stationId) {
+            stationId
+            isLoadingDock
+            equipment {
+              equipmentId
+              equipmentTypeName
+              status
+              latestReadings {
+                sensorId
+                readingType
+                value
+                readingAtUtc
+              }
+            }
+          }
+        }
+        """;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await GraphQlClient.SendAsync<StationWorkflowResponse>(
+                StationQuery, new { facilityId = FacilityId, stationId = StationId });
+            _station = response.StationWorkflow.FirstOrDefault();
+            _error = null;
+        }
+        catch (GraphQlRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private record RowNode(WorkflowEquipment? Equipment, string? Label);
+
+    // Every station has its own Dispatch box - the outbound staging area past its last equipment
+    // step - regardless of whether IsLoadingDock makes this station the whole line's terminus.
+    // From the Station Supervisor's seat, once a part leaves the last equipment step it's in
+    // their own Dispatch queue and it's Dispatch's problem from there (whether the next hop is
+    // another station or the real facility loading dock is invisible at this altitude) - unlike
+    // StationFlowDiagram's line-level "Transfer" vs. "Dispatch" distinction, which is about the
+    // *line's* terminus, not this station's own local hand-off point.
+    private List<RowNode> BuildRow()
+    {
+        var row = _station!.Equipment.Select(e => new RowNode(e, null)).ToList();
+        row.Add(new RowNode(null, "Dispatch"));
+        return row;
+    }
+
+    private static (double cx, double cy) Position(int index, int rowCount)
+    {
+        var spacing = rowCount > 1 ? (ViewWidth - 2 * Margin) / (double)(rowCount - 1) : 0;
+        var cx = Margin + index * spacing;
+        var cy = BaseTop + (index % 2 == 1 ? RowOffset : 0);
+        return (cx, cy);
+    }
+
+    private static string ConnectorPoints(int rowCount) => string.Join(" ", Enumerable.Range(0, rowCount).Select(i =>
+    {
+        var (cx, cy) = Position(i, rowCount);
+        return $"{Fmt(cx)},{Fmt(cy + PrismDepth)}";
+    }));
+
+    private static string TopFace(double cx, double cy) =>
+        $"{Fmt(cx - HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy - HalfHeight)} {Fmt(cx + HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy + HalfHeight)}";
+
+    private static string LeftFace(double cx, double cy) =>
+        $"{Fmt(cx - HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy + HalfHeight)} {Fmt(cx)},{Fmt(cy + HalfHeight + PrismDepth)} {Fmt(cx - HalfWidth)},{Fmt(cy + PrismDepth)}";
+
+    private static string RightFace(double cx, double cy) =>
+        $"{Fmt(cx)},{Fmt(cy + HalfHeight)} {Fmt(cx + HalfWidth)},{Fmt(cy)} {Fmt(cx + HalfWidth)},{Fmt(cy + PrismDepth)} {Fmt(cx)},{Fmt(cy + HalfHeight + PrismDepth)}";
+
+    private static string Fmt(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    private static (string top, string left, string right) ColorsFor(string status) => status switch
+    {
+        "Faulted" => ("#ef5b4e", "#8a1f16", "#c93b2e"),
+        "Idle" => ("#f0b429", "#8a5f08", "#c98a12"),
+        "Operational" => ("#22e08f", "#0e6b46", "#189a63"),
+        _ => ("#7fb0ef", "#1c4d94", "#2f6fd6"),
+    };
+
+    // Hover shows only the single most recent reading across all of this equipment's sensors -
+    // "the top one" - full history/trend lives behind the click-through into SensorTrendModal,
+    // reached via a link inside this same tooltip rather than a second hover target.
+    private RenderFragment RenderTooltip(double cx, double cy, WorkflowEquipment eq) => @<g>
+        @{
+            var latest = eq.LatestReadings.OrderByDescending(r => r.ReadingAtUtc).FirstOrDefault();
+            var boxX = Math.Min(cx + 34, ViewWidth - 190);
+            var boxY = cy - 10;
+        }
+        <rect x="@Fmt(boxX)" y="@Fmt(boxY)" width="180" height="@(latest is null ? 40 : 58)" rx="4" fill="#1c2029" stroke="#3f3f45" />
+        @if (latest is null)
+        {
+            <g><text x="@Fmt(boxX + 10)" y="@Fmt(boxY + 24)" fill="#a7acb5" font-size="11">No sensor data</text></g>
+        }
+        else
+        {
+            <g>
+                <text x="@Fmt(boxX + 10)" y="@Fmt(boxY + 18)" fill="#f2f3f5" font-size="12" font-weight="600">@latest.ReadingType: @latest.Value.ToString("0.##")</text>
+                <text x="@Fmt(boxX + 10)" y="@Fmt(boxY + 34)" fill="#a7acb5" font-size="10">@latest.ReadingAtUtc.ToLocalTime().ToString("t")</text>
+            </g>
+        }
+        <text x="@Fmt(boxX + 10)" y="@Fmt(boxY + (latest is null ? 40 : 52))" fill="#8fb7ef" font-size="11" text-decoration="underline"
+              style="cursor:pointer;" @onclick="() => OpenTrend(eq)" @onclick:stopPropagation="true">View trend &#8594;</text>
+    </g>;
+
+    private void OpenTrend(WorkflowEquipment eq)
+    {
+        _trendEquipmentId = eq.EquipmentId;
+        _trendEquipmentTypeName = eq.EquipmentTypeName;
+    }
+}

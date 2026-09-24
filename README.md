@@ -30,6 +30,21 @@ By ensuring the LLM only receives hyper-localized context or an explicit enginee
 - Claude Sonnet 5 – Underlying foundational LLM executing single-agent workflows and multi-agent loops.
 - Island Architecture – Each platform surface (web, mobile, watch, TV, etc.) is a fully self-hosted, independently runnable "Island" app, not a shared shell multiplexing between them. System- or user-level configuration decides which Island(s) are active. The current Web Island is a standalone, in-browser Blazor WebAssembly client (`Telara.Client`) served by its own thin ASP.NET Core host (`Telara.Web`), talking to the backend purely over GraphQL/HTTP. Future Islands (mobile, watch, TV) plug in as siblings under `src/Frontend/Islands/` without touching this one or the backend.
 
+# Running Locally
+
+The full stack is several independent processes — start them in this order so each one's dependencies are already listening when it boots (`Telara.OpsApi`'s background telemetry generator calls MAF on startup and will crash the host if MAF isn't up yet):
+
+1. **Internal Functionality MCP Server** – `dotnet run --project src/McpServers/Telara.Mcp.Internal` (`http://localhost:5217`)
+2. **Claude Haiku MCP Server** – `dotnet run --project src/McpServers/Telara.Mcp.Haiku` (`http://localhost:5286`)
+3. **MAF Orchestrator** – `dotnet run --project src/McpServers/Telara.Maf.Orchestrator` (`http://localhost:5009`)
+4. **Telara.OpsApi** (GraphQL API + Banana Cake Pop) – `dotnet run --project src/Backend/DotNet/Telara.OpsApi --launch-profile https` (`https://localhost:7162`). **The `--launch-profile https` is required** — `launchSettings.json` lists the `http`-only profile first, so a bare `dotnet run` binds only `:5158` and leaves `:7162` unreachable, which is what the Web Island, the CORS policy, and the `Secure` refresh cookie all expect.
+5. **Telara.Web** (Blazor Web Island) – `dotnet run --project src/Frontend/Islands/Web/Telara.Web --launch-profile https`, then browse to **`https://localhost:7040`** (not the `:5051` http URL). **This one matters for auth, not just habit**: the refresh-token cookie is `SameSite=Strict`, and browsers apply "schemeful same-site" — `http://localhost:5051` and `https://localhost:7162` count as different *sites* purely because the scheme differs, even though the host is identical, so the cookie silently never gets sent and a page refresh always forces a fresh login. Serving the Web Island over `https://localhost:7040` instead makes it same-scheme with OpsApi, so `SameSite=Strict` actually applies as intended.
+
+Before step 4 the first time, or after a schema change, apply migrations:
+`dotnet ef database update --project src/Backend/DotNet/Telara.Domain --startup-project src/Backend/DotNet/Telara.OpsApi`
+
+Seed reference/demo data as needed from `Telara.SQLScripts/` (run in numeric filename order against `telara_ops`). To log into the three role-scoped dashboards, run at least through `006.SeedDemoUsersForDashboardRoles.sql`, which adds `shift.manager@telara.demo` and `plant.director@telara.demo` (password `password123` for both); the Station Supervisor login is whichever demo user `001.SeedUsersTable-Demo.sql` already seeded.
+
 ## Base Orchestration to MCP Server(s) managing tools and Agents
 
 This system architecture is designed to eliminate the most common failure points in enterprise AI engineering — addressing agent prompt 

@@ -8,6 +8,7 @@ using Telara.Core.Generators;
 using Telara.Core.Generators.Interfaces;
 using Telara.Core.Maf;
 using Telara.Domain.Data;
+using Telara.Domain.Telemetry;
 using Telara.OpsApi.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +51,13 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+// The Web Island (Telara.Client, Blazor WASM) is a different origin from OpsApi - AllowCredentials
+// is required ahead of client-side auth landing, since the refresh token is an HttpOnly cookie
+// (see postman-auth-testing.md), which rules out AllowAnyOrigin.
+var webIslandOrigins = builder.Configuration.GetSection("WebIsland:Origins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy("WebIsland", policy =>
+    policy.WithOrigins(webIslandOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+
 builder.AddGraphQL()
     .AddOpsApiTypes()
     .AddFiltering()
@@ -59,9 +67,26 @@ builder.AddGraphQL()
 
 var app = builder.Build();
 
+app.UseCors("WebIsland");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGraphQL();
 
+// Diagnostic REST route, per CLAUDE.md's "System Controls" - UI-free way to force a station's
+// simulated output below its target so root-cause-finding on the dashboard chart can be
+// exercised without hand-editing appsettings and restarting the generator.
+app.MapPost("/api/simulator/station-output-rate", (
+    StationOutputRateRequest request, GeneratorRegistry registry) =>
+{
+    var key = new TelemetryKey(request.FacilityId, request.StationId, TelemetryLevel.Equipment, request.EquipmentId);
+    if (!registry.TryGet(key, out var instance) || instance is null)
+        return Results.NotFound($"No generator instance for {request.FacilityId}/{request.StationId}/{request.EquipmentId}.");
+
+    instance.OutputRateMultiplier = request.Multiplier;
+    return Results.Ok(new { instance.OutputRateMultiplier });
+}).RequireAuthorization();
+
 app.RunWithGraphQLCommands(args);
+
+public record StationOutputRateRequest(string FacilityId, string StationId, string EquipmentId, decimal Multiplier);

@@ -1,0 +1,6 @@
+<svg viewBox="0 0 300 48" xmlns="http://www.w3.org/2000/svg">
+  <line x1="6" y1="24" x2="132" y2="24" stroke="#154991" stroke-width="2" opacity="0.4"></line>
+  <rect x="6" y="14" width="20" height="20" fill="#2f6fd6" transform="rotate(45 16 24)"></rect>
+  <rect x="44.5" y="16.5" width="15" height="15" fill="#2f6fd6" transform="rotate(45 52 24)"></rect>
+  <rect x="79" y="19" width="10" height="10" fill="#2f6fd6" transform="rotate(45 84 24)"></rect>
+  <rect x="116" y="16" width="16" height="16" fill="#1f9d63" transform="rotate(45 124 24)"></rect><text x="150" y="32" font-family="'Space Grotesk', sans-serif" font-size="28" font-weight="600" letter-spacing="-0.5" fill="#17181b">Telara</text></svg>

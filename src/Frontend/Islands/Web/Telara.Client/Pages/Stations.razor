@@ -1,0 +1,336 @@
+@page "/stations"
+@attribute [Authorize(Roles = "Station Supervisor")]
+@inject GraphQlClient GraphQlClient
+
+<PageTitle>Stations</PageTitle>
+
+<h1>Register a Station</h1>
+<p class="text-muted">Facility: @DemoFacilityId (single stubbed facility, per ARCHITECTURE.md)</p>
+
+<EditForm Model="@stationModel" OnValidSubmit="HandleRegisterStationAsync" FormName="register-station">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="stationId" class="form-label">Station Id</label>
+        <InputText id="stationId" class="form-control" @bind-Value="stationModel.StationId" />
+    </div>
+
+    <div class="mb-3 form-check">
+        <InputCheckbox id="isLoadingDock" class="form-check-input" @bind-Value="stationModel.IsLoadingDock" />
+        <label for="isLoadingDock" class="form-check-label">This is a loading dock (terminal station)</label>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Predecessor Stations</label>
+        <p class="form-text">
+            Stations whose output feeds into this one. Leave empty if this station starts a new line.
+            Multiple predecessors funnel into this one station; a predecessor can only feed one successor,
+            so only stations without one already (and not loading docks) are selectable.
+        </p>
+
+        @if (_loadingStations)
+        {
+            <p class="text-muted">Loading available predecessors…</p>
+        }
+        else if (_availablePredecessors.Count == 0)
+        {
+            <p class="text-muted">No available predecessors - this will start a new line.</p>
+        }
+        else
+        {
+            @foreach (var station in _availablePredecessors)
+            {
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="@($"pred-{station.StationId}")"
+                           checked="@stationModel.PredecessorStationIds.Contains(station.StationId)"
+                           @onchange="@(e => TogglePredecessor(station.StationId, (bool)e.Value!))" />
+                    <label class="form-check-label" for="@($"pred-{station.StationId}")">@station.StationId</label>
+                </div>
+            }
+        }
+    </div>
+
+    @if (stationErrorMessage is not null)
+    {
+        <p class="text-danger">@stationErrorMessage</p>
+    }
+
+    @if (stationSuccessMessage is not null)
+    {
+        <p class="text-success">@stationSuccessMessage</p>
+    }
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmittingStation">Register Station</button>
+</EditForm>
+
+<hr class="my-4" />
+
+<h1>Register Equipment</h1>
+
+<EditForm Model="@equipmentModel" OnValidSubmit="HandleRegisterEquipmentAsync" FormName="register-equipment">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="equipmentStationId" class="form-label">Station</label>
+        @if (_loadingStations)
+        {
+            <p class="text-muted">Loading stations…</p>
+        }
+        else if (_allStations.Count == 0)
+        {
+            <p class="text-muted">No stations registered yet - register one above first.</p>
+        }
+        else
+        {
+            <InputSelect id="equipmentStationId" class="form-select" @bind-Value="equipmentModel.StationId">
+                <option value="">Select a station…</option>
+                @foreach (var station in _allStations)
+                {
+                    <option value="@station.StationId">@station.StationId</option>
+                }
+            </InputSelect>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label for="equipmentId" class="form-label">Equipment Id</label>
+        <InputText id="equipmentId" class="form-control" @bind-Value="equipmentModel.EquipmentId" />
+    </div>
+
+    <div class="mb-3">
+        <label for="equipmentTypeId" class="form-label">Equipment Type</label>
+        @if (_loadingEquipmentTypes)
+        {
+            <p class="text-muted">Loading equipment types…</p>
+        }
+        else if (_equipmentTypes.Count == 0)
+        {
+            <p class="text-muted">No equipment types seeded yet.</p>
+        }
+        else
+        {
+            <InputSelect id="equipmentTypeId" class="form-select" @bind-Value="equipmentModel.EquipmentTypeId">
+                <option value="0">Select a type…</option>
+                @foreach (var type in _equipmentTypes)
+                {
+                    <option value="@type.Id">@type.Name</option>
+                }
+            </InputSelect>
+        }
+    </div>
+
+    @if (equipmentErrorMessage is not null)
+    {
+        <p class="text-danger">@equipmentErrorMessage</p>
+    }
+
+    @if (equipmentSuccessMessage is not null)
+    {
+        <p class="text-success">@equipmentSuccessMessage</p>
+    }
+
+    <button type="submit" class="btn btn-primary" disabled="@isSubmittingEquipment">Register Equipment</button>
+</EditForm>
+
+@code {
+    private const string DemoFacilityId = "FAC-001";
+
+    private const string StationsQuery = """
+        query Stations($facilityId: String!) {
+          stations(facilityId: $facilityId) {
+            stationId
+            isLoadingDock
+            nextStationId
+          }
+        }
+        """;
+
+    private const string RegisterStationMutation = """
+        mutation RegisterStation($facilityId: String!, $stationId: String!, $predecessorStationIds: [String!], $isLoadingDock: Boolean!) {
+          registerStation(facilityId: $facilityId, stationId: $stationId, predecessorStationIds: $predecessorStationIds, isLoadingDock: $isLoadingDock) {
+            facilityId
+            stationId
+            isLoadingDock
+            predecessorStationIds
+          }
+        }
+        """;
+
+    private const string EquipmentTypesQuery = """
+        query EquipmentTypes {
+          equipmentTypes {
+            id
+            name
+          }
+        }
+        """;
+
+    private const string RegisterStationEquipmentMutation = """
+        mutation RegisterStationEquipment($facilityId: String!, $stationId: String!, $equipmentId: String!, $equipmentTypeId: Int!) {
+          registerStationEquipment(facilityId: $facilityId, stationId: $stationId, equipmentId: $equipmentId, equipmentTypeId: $equipmentTypeId) {
+            facilityId
+            stationId
+            equipmentId
+            equipmentTypeId
+          }
+        }
+        """;
+
+    private readonly RegisterStationModel stationModel = new();
+    private readonly RegisterStationEquipmentModel equipmentModel = new();
+
+    private List<StationSummary> _allStations = [];
+    private List<StationSummary> _availablePredecessors = [];
+    private List<EquipmentType> _equipmentTypes = [];
+    private bool _loadingStations = true;
+    private bool _loadingEquipmentTypes = true;
+
+    private string? stationErrorMessage;
+    private string? stationSuccessMessage;
+    private bool isSubmittingStation;
+
+    private string? equipmentErrorMessage;
+    private string? equipmentSuccessMessage;
+    private bool isSubmittingEquipment;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStationsAsync();
+        await LoadEquipmentTypesAsync();
+    }
+
+    private async Task LoadStationsAsync()
+    {
+        _loadingStations = true;
+        try
+        {
+            var response = await GraphQlClient.SendAsync<StationsResponse>(StationsQuery, new { facilityId = DemoFacilityId });
+            _allStations = response.Stations;
+            _availablePredecessors = response.Stations
+                .Where(s => !s.IsLoadingDock && s.NextStationId is null)
+                .ToList();
+        }
+        catch (GraphQlRequestException ex)
+        {
+            stationErrorMessage = ex.Message;
+        }
+        finally
+        {
+            _loadingStations = false;
+        }
+    }
+
+    private async Task LoadEquipmentTypesAsync()
+    {
+        _loadingEquipmentTypes = true;
+        try
+        {
+            var response = await GraphQlClient.SendAsync<EquipmentTypesResponse>(EquipmentTypesQuery);
+            _equipmentTypes = response.EquipmentTypes;
+        }
+        catch (GraphQlRequestException ex)
+        {
+            equipmentErrorMessage = ex.Message;
+        }
+        finally
+        {
+            _loadingEquipmentTypes = false;
+        }
+    }
+
+    private void TogglePredecessor(string stationId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!stationModel.PredecessorStationIds.Contains(stationId))
+                stationModel.PredecessorStationIds.Add(stationId);
+        }
+        else
+        {
+            stationModel.PredecessorStationIds.Remove(stationId);
+        }
+    }
+
+    private async Task HandleRegisterStationAsync()
+    {
+        stationErrorMessage = null;
+        stationSuccessMessage = null;
+        isSubmittingStation = true;
+        try
+        {
+            var response = await GraphQlClient.SendAsync<RegisterStationResponse>(RegisterStationMutation, new
+            {
+                facilityId = DemoFacilityId,
+                stationId = stationModel.StationId,
+                predecessorStationIds = stationModel.PredecessorStationIds,
+                isLoadingDock = stationModel.IsLoadingDock,
+            });
+
+            stationSuccessMessage = $"Registered {response.RegisterStation.StationId}.";
+            stationModel.StationId = "";
+            stationModel.IsLoadingDock = false;
+            stationModel.PredecessorStationIds.Clear();
+            await LoadStationsAsync();
+        }
+        catch (GraphQlRequestException ex)
+        {
+            stationErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmittingStation = false;
+        }
+    }
+
+    private async Task HandleRegisterEquipmentAsync()
+    {
+        equipmentErrorMessage = null;
+        equipmentSuccessMessage = null;
+        isSubmittingEquipment = true;
+        try
+        {
+            var response = await GraphQlClient.SendAsync<RegisterStationEquipmentResponse>(RegisterStationEquipmentMutation, new
+            {
+                facilityId = DemoFacilityId,
+                stationId = equipmentModel.StationId,
+                equipmentId = equipmentModel.EquipmentId,
+                equipmentTypeId = equipmentModel.EquipmentTypeId,
+            });
+
+            equipmentSuccessMessage = $"Registered {response.RegisterStationEquipment.EquipmentId} at {response.RegisterStationEquipment.StationId}.";
+            equipmentModel.StationId = "";
+            equipmentModel.EquipmentId = "";
+            equipmentModel.EquipmentTypeId = 0;
+        }
+        catch (GraphQlRequestException ex)
+        {
+            equipmentErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmittingEquipment = false;
+        }
+    }
+
+    private class RegisterStationModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string StationId { get; set; } = "";
+
+        public bool IsLoadingDock { get; set; }
+
+        public List<string> PredecessorStationIds { get; set; } = [];
+    }
+
+    private class RegisterStationEquipmentModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string StationId { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string EquipmentId { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue, ErrorMessage = "Select an equipment type.")]
+        public int EquipmentTypeId { get; set; }
+    }
+}

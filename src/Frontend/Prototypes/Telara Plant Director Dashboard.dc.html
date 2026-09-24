@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  body{margin:0;background:#141416;}
+  a{color:#8fb7ef;} a:hover{color:#aecbf5;}
+</style>
+</helmet>
+
+<div style="font-family:'Inter',sans-serif;background:#141416;padding:32px 0;">
+  <div style="max-width:1440px;margin:0 auto;padding:0 24px;">
+    <div style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Plant Director &middot; primary dashboard &middot; dark &quot;control room&quot; mode</div>
+
+    <div style="background:#242424;border-radius:6px;border:1px solid #3f3f45;overflow:hidden;">
+      <div style="display:flex;">
+
+        <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ true }}">
+        <aside style="width:220px;flex-shrink:0;background:#1b1b1d;border-right:1px solid #3f3f45;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;min-height:106px;box-sizing:border-box;border-bottom:1px solid #3f3f45;">
+            <img src="assets/telara-lockup-dark.svg" alt="Telara" style="height:20px;"/>
+            <button onClick="{{ toggleNav }}" style="background:transparent;border:none;cursor:pointer;padding:4px;display:flex;flex-direction:column;gap:3px;">
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+            </button>
+          </div>
+          <nav style="display:flex;flex-direction:column;padding:16px 8px;gap:4px;">
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;background:rgba(143,183,239,0.12);color:#8fb7ef;font-size:14px;font-weight:500;text-decoration:none;">Overview</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Production</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Parts</a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Personnel</a>
+            <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Financials<span style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.06em;border:1px solid #3f3f45;border-radius:2px;padding:1px 4px;">SOON</span></a>
+            <a href="#" style="display:flex;align-items:center;padding:10px 12px;border-radius:4px;color:#a7acb5;font-size:14px;text-decoration:none;">Alerts</a>
+          </nav>
+          <div style="margin-top:auto;padding:16px;border-top:1px solid #333337;display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:999px;background:#2b2b2e;border:1px solid #3f3f45;display:flex;align-items:center;justify-content:center;font-size:12px;color:#f2f3f5;font-weight:600;">RD</div>
+            <div style="font-size:12px;color:#a7acb5;">Plant Director</div>
+          </div>
+        </aside>
+        </sc-if>
+
+        <sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}">
+        <aside style="width:64px;flex-shrink:0;background:#1b1b1d;border-right:1px solid #3f3f45;display:flex;flex-direction:column;align-items:center;">
+          <div style="padding:16px 0;min-height:106px;box-sizing:border-box;align-items:center;border-bottom:1px solid #3f3f45;width:100%;display:flex;justify-content:center;">
+            <button onClick="{{ toggleNav }}" style="background:transparent;border:none;cursor:pointer;padding:4px;display:flex;flex-direction:column;gap:3px;">
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+              <span style="width:16px;height:2px;background:#a7acb5;"></span>
+            </button>
+          </div>
+          <nav style="display:flex;flex-direction:column;padding:16px 0;gap:8px;align-items:center;">
+            <a href="#" title="Overview" style="width:36px;height:36px;border-radius:4px;background:rgba(143,183,239,0.12);color:#8fb7ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;text-decoration:none;">O</a>
+            <a href="#" title="Production" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">Pr</a>
+            <a href="#" title="Parts" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">Pa</a>
+            <a href="#" title="Personnel" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">Pe</a>
+            <a href="#" title="Financials (planned)" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">F</a>
+            <a href="#" title="Alerts" style="width:36px;height:36px;border-radius:4px;color:#a7acb5;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;">A</a>
+          </nav>
+          <div style="margin-top:auto;padding:16px 0;">
+            <div style="width:32px;height:32px;border-radius:999px;background:#2b2b2e;border:1px solid #3f3f45;display:flex;align-items:center;justify-content:center;font-size:12px;color:#f2f3f5;font-weight:600;">RD</div>
+          </div>
+        </aside>
+        </sc-if>
+
+        <div style="flex:1;min-width:0;">
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;height:72px;box-sizing:border-box;border-bottom:2px solid #08060d;background:#1b1b1d;">
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#f2f3f5;">Facility 01</div>
+                <div style="font-size:12px;color:#a7acb5;white-space:nowrap;">Plant Director</div>
+              </div>
+              <div style="width:1px;height:28px;background:#3f3f45;"></div>
+              <label style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;">Period</span>
+                <select style="font-family:'Inter',sans-serif;font-size:13px;color:#f2f3f5;background:#2b2b2e;border:1px solid #3f3f45;border-radius:4px;padding:6px 10px;min-width:150px;">
+                  <option>This week</option>
+                  <option>This month</option>
+                  <option>This quarter</option>
+                </select>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;">Scope</span>
+                <select style="font-family:'Inter',sans-serif;font-size:13px;color:#f2f3f5;background:#2b2b2e;border:1px solid #3f3f45;border-radius:4px;padding:6px 10px;min-width:140px;">
+                  <option>All lines</option>
+                  <option>Line 1</option>
+                  <option>Line 2</option>
+                  <option>Line 3</option>
+                  <option>Line 4</option>
+                </select>
+              </label>
+            </div>
+            <div style="font-family:'Space Mono',monospace;font-size:14px;color:#a7acb5;">13:42:07</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;padding:8px 24px;height:34px;box-sizing:border-box;background:#1b1b1d;border-bottom:1px solid #3f3f45;">
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#8fb7ef;font-weight:700;flex-shrink:0;white-space:nowrap;">WEEK 37</span>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;flex-shrink:0;">MON 08</span>
+            <div style="position:relative;flex:1;height:4px;background:#333337;border-radius:999px;">
+              <div style="position:absolute;left:0;top:0;width:71%;height:4px;background:rgba(143,183,239,0.35);border-radius:999px;"></div>
+              <div style="position:absolute;left:71%;top:-6px;width:2px;height:16px;background:#8fb7ef;"></div>
+            </div>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;flex-shrink:0;">SUN 14</span>
+          </div>
+
+          <div style="padding:24px;">
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:16px;">
+
+              <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 20px;">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Throughput &middot; units shipped</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:600;color:#f2f3f5;letter-spacing:-0.02em;line-height:1;">6,480</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:12px;color:#f39991;">&minus;8.1%</div>
+                </div>
+                <div style="font-size:12px;color:#a7acb5;margin-top:6px;">vs. 7,050 target</div>
+                <svg viewBox="0 0 160 32" style="width:100%;height:32px;display:block;margin-top:12px;">
+                  <polyline points="0,14 27,10 53,18 80,8 107,22 133,26 160,20" fill="none" stroke="#8fb7ef" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 20px;">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Schedule attainment</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:600;color:#f2f3f5;letter-spacing:-0.02em;line-height:1;">92%</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:12px;color:#1ed488;">+3.0%</div>
+                </div>
+                <div style="font-size:12px;color:#a7acb5;margin-top:6px;">4 of 4 lines running</div>
+                <svg viewBox="0 0 160 32" style="width:100%;height:32px;display:block;margin-top:12px;">
+                  <polyline points="0,22 27,20 53,24 80,16 107,14 133,12 160,10" fill="none" stroke="#1ed488" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 20px;">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Constraint hours lost</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:600;color:#f2f3f5;letter-spacing:-0.02em;line-height:1;">31.4</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:12px;color:#f39991;">+6.2</div>
+                </div>
+                <div style="font-size:12px;color:#a7acb5;margin-top:6px;">Riveting accounts for 19.4</div>
+                <svg viewBox="0 0 160 32" style="width:100%;height:32px;display:block;margin-top:12px;">
+                  <polyline points="0,24 27,22 53,20 80,18 107,12 133,10 160,6" fill="none" stroke="#f39991" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 20px;">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">At dock &middot; awaiting dispatch</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:600;color:#f2f3f5;letter-spacing:-0.02em;line-height:1;">412</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:12px;color:#d9a712;">2 days</div>
+                </div>
+                <div style="font-size:12px;color:#a7acb5;margin-top:6px;">Holding above 300-unit ceiling</div>
+                <svg viewBox="0 0 160 32" style="width:100%;height:32px;display:block;margin-top:12px;">
+                  <polyline points="0,26 27,24 53,18 80,20 107,14 133,10 160,8" fill="none" stroke="#d9a712" stroke-width="2"/>
+                </svg>
+              </div>
+
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:16px;align-items:start;margin-bottom:16px;">
+
+              <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 24px 20px;">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin-bottom:4px;">
+                  <div style="font-size:13px;font-weight:600;color:#f2f3f5;">Throughput vs. target &middot; week 37</div>
+                  <div style="display:flex;align-items:center;gap:14px;">
+                    <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#8fb7ef;border-radius:1px;"></span><span style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;">SHIPPED</span></div>
+                    <div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:2px;background:#a7acb5;"></span><span style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;">TARGET 1,250/DAY</span></div>
+                  </div>
+                </div>
+                <svg viewBox="0 0 720 232" style="width:100%;height:auto;display:block;">
+                  <line x1="60" y1="200" x2="700" y2="200" stroke="#3f3f45" stroke-width="1"/>
+                  <line x1="60" y1="155" x2="700" y2="155" stroke="#333337" stroke-width="1"/>
+                  <line x1="60" y1="110" x2="700" y2="110" stroke="#333337" stroke-width="1"/>
+                  <line x1="60" y1="65" x2="700" y2="65" stroke="#333337" stroke-width="1"/>
+                  <line x1="60" y1="20" x2="700" y2="20" stroke="#333337" stroke-width="1"/>
+                  <text x="50" y="204" text-anchor="end" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">0</text>
+                  <text x="50" y="159" text-anchor="end" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">350</text>
+                  <text x="50" y="114" text-anchor="end" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">700</text>
+                  <text x="50" y="69" text-anchor="end" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">1050</text>
+                  <text x="50" y="24" text-anchor="end" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">1400</text>
+
+                  <rect x="89" y="48" width="48" height="152" fill="#8fb7ef"/>
+                  <rect x="195" y="41" width="48" height="159" fill="#8fb7ef"/>
+                  <rect x="301" y="60" width="48" height="140" fill="#8fb7ef"/>
+                  <rect x="407" y="32" width="48" height="168" fill="#8fb7ef"/>
+                  <rect x="513" y="69" width="48" height="131" fill="#8fb7ef"/>
+                  <rect x="619" y="118" width="48" height="82" fill="#4d6c99"/>
+
+                  <line x1="60" y1="39" x2="700" y2="39" stroke="#a7acb5" stroke-width="2" stroke-dasharray="6 4"/>
+
+                  <text x="113" y="218" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">MON</text>
+                  <text x="219" y="218" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">TUE</text>
+                  <text x="325" y="218" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">WED</text>
+                  <text x="431" y="218" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">THU</text>
+                  <text x="537" y="218" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">FRI</text>
+                  <text x="643" y="218" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">SAT</text>
+
+                  <text x="113" y="42" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#141416">1180</text>
+                  <text x="219" y="35" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#141416">1240</text>
+                  <text x="325" y="54" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#141416">1090</text>
+                  <text x="431" y="26" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#141416">1310</text>
+                  <text x="537" y="63" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#141416">1020</text>
+                  <text x="643" y="112" text-anchor="middle" font-family="'Space Mono',monospace" font-size="15" fill="#a7acb5">640</text>
+                </svg>
+              </div>
+
+              <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 24px 20px;">
+                <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:4px;">Where the constraint sat</div>
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;margin-bottom:18px;">share of constrained hours &middot; 6 weeks</div>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Riveting</span><span style="font-family:'Space Mono',monospace;color:#f39991;">62%</span></div>
+                    <div style="height:8px;background:#333337;border-radius:999px;"><div style="height:8px;width:62%;background:#f39991;border-radius:999px;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Cutting</span><span style="font-family:'Space Mono',monospace;color:#d9a712;">18%</span></div>
+                    <div style="height:8px;background:#333337;border-radius:999px;"><div style="height:8px;width:18%;background:#d9a712;border-radius:999px;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Packing</span><span style="font-family:'Space Mono',monospace;color:#a7acb5;">11%</span></div>
+                    <div style="height:8px;background:#333337;border-radius:999px;"><div style="height:8px;width:11%;background:#a7acb5;border-radius:999px;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Labeling</span><span style="font-family:'Space Mono',monospace;color:#a7acb5;">6%</span></div>
+                    <div style="height:8px;background:#333337;border-radius:999px;"><div style="height:8px;width:6%;background:#a7acb5;border-radius:999px;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:#f2f3f5;">Raw materials</span><span style="font-family:'Space Mono',monospace;color:#a7acb5;">3%</span></div>
+                    <div style="height:8px;background:#333337;border-radius:999px;"><div style="height:8px;width:3%;background:#a7acb5;border-radius:999px;"></div></div>
+                  </div>
+                </div>
+                <div style="margin-top:18px;padding-top:14px;border-top:1px solid #333337;font-size:13px;color:#a7acb5;line-height:1.5;">Riveting has been the constraint six weeks running. Either it gets capacity, or dock expectations come down.</div>
+              </div>
+
+            </div>
+
+            <div style="background:#2b2b2e;border:1px solid #3f3f45;border-radius:6px;padding:18px 24px 8px;margin-bottom:16px;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin-bottom:14px;">
+                <div style="font-size:13px;font-weight:600;color:#f2f3f5;">Parts &middot; optimization status</div>
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;">select a row to drill into the line</div>
+              </div>
+              <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 10px 0;border-bottom:1px solid #3f3f45;">Part</th>
+                    <th style="text-align:left;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 10px 0;border-bottom:1px solid #3f3f45;">Line</th>
+                    <th style="text-align:right;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 10px 0;border-bottom:1px solid #3f3f45;">Shipped</th>
+                    <th style="text-align:right;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 10px 0;border-bottom:1px solid #3f3f45;">Target</th>
+                    <th style="text-align:right;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 10px 0;border-bottom:1px solid #3f3f45;">Attainment</th>
+                    <th style="text-align:left;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 12px 10px 0;border-bottom:1px solid #3f3f45;">Constraint</th>
+                    <th style="text-align:left;font-family:'Space Mono',monospace;font-size:10px;font-weight:400;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;padding:0 0 10px 0;border-bottom:1px solid #3f3f45;">Read</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Bracket Assembly &mdash; A104</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Line 3</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">4,820</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">5,600</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#f39991;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">86%</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Riveting</td>
+                    <td style="padding:14px 0;border-bottom:1px solid #333337;"><span style="font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border-radius:2px;background:rgba(243,153,145,0.30);color:#f39991;">NEEDS CAPACITY</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Drive Housing &mdash; B220</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Line 1</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">3,140</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">3,000</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#1ed488;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">105%</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">&mdash;</td>
+                    <td style="padding:14px 0;border-bottom:1px solid #333337;"><span style="font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border-radius:2px;background:rgba(30,212,136,0.12);color:#1ed488;">OPTIMIZED</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Panel Sub-assembly &mdash; C310</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Line 2</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">2,260</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">2,900</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#f39991;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">78%</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;border-bottom:1px solid #333337;">Cutting</td>
+                    <td style="padding:14px 0;border-bottom:1px solid #333337;"><span style="font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border-radius:2px;background:rgba(217,167,18,0.16);color:#d9a712;">LOWER TARGET</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:14px;color:#f2f3f5;padding:14px 12px;padding-left:0;">Housing Cover &mdash; D118</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;">Line 4</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#f2f3f5;padding:14px 12px 14px 0;">1,980</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;">1,900</td>
+                    <td style="text-align:right;font-family:'Space Mono',monospace;font-size:14px;color:#1ed488;padding:14px 12px 14px 0;">104%</td>
+                    <td style="font-size:14px;color:#a7acb5;padding:14px 12px 14px 0;">&mdash;</td>
+                    <td style="padding:14px 0;"><span style="font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border-radius:2px;background:rgba(30,212,136,0.12);color:#1ed488;">OPTIMIZED</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="border:1px dashed #3f3f45;border-radius:6px;padding:16px 20px;display:flex;align-items:center;gap:16px;">
+              <span style="font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;border:1px solid #3f3f45;border-radius:2px;padding:3px 6px;flex-shrink:0;">Planned</span>
+              <div style="font-size:13px;color:#a7acb5;line-height:1.5;">Revenue and P&amp;L per part land here &mdash; material purchase cost against shipped value, so personnel allocation can be argued on margin rather than unit count.</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { navOpen: true };
+  renderVals() {
+    return {
+      navOpen: this.state.navOpen,
+      navCollapsed: !this.state.navOpen,
+      toggleNav: () => this.setState(s => ({ navOpen: !s.navOpen })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -18,11 +18,36 @@ public class RegisterStationCommandHandler(TelaraDbContext db)
         if (exists)
             throw new StationAlreadyExistsException(request.FacilityId, request.StationId);
 
+        var predecessorIds = request.PredecessorStationIds.Distinct().ToList();
+        var predecessors = new List<Station>();
+
+        foreach (var predecessorId in predecessorIds)
+        {
+            var predecessor = await db.Stations.SingleOrDefaultAsync(
+                s => s.FacilityId == request.FacilityId && s.StationId == predecessorId,
+                cancellationToken);
+
+            if (predecessor is null)
+                throw new StationNotFoundException(request.FacilityId, predecessorId);
+
+            // A predecessor can only feed into one successor (NextStationId is a single
+            // self-referencing FK - see RegisterStationCommand), and a loading dock is a line's
+            // terminal node by definition, so neither can be handed a new successor here.
+            if (predecessor.IsLoadingDock || predecessor.NextStationId is not null)
+                throw new PredecessorLinkConflictException(request.FacilityId, predecessorId);
+
+            predecessors.Add(predecessor);
+        }
+
         db.Stations.Add(new Station
         {
             FacilityId = request.FacilityId,
             StationId = request.StationId,
+            IsLoadingDock = request.IsLoadingDock,
         });
+
+        foreach (var predecessor in predecessors)
+            predecessor.NextStationId = request.StationId;
 
         try
         {
@@ -35,6 +60,6 @@ public class RegisterStationCommandHandler(TelaraDbContext db)
             throw new StationAlreadyExistsException(request.FacilityId, request.StationId);
         }
 
-        return new RegisterStationResult(request.FacilityId, request.StationId);
+        return new RegisterStationResult(request.FacilityId, request.StationId, request.IsLoadingDock, predecessorIds);
     }
 }

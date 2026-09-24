@@ -31,11 +31,13 @@ public static partial class Mutation
     // to a structured extensions.code the UI can act on - the GraphQL-native equivalent of the
     // "409 Conflict with a structured body" the doc calls for, since OpsApi has no REST surface
     // for registration to attach a literal HTTP status to.
-    [Authorize]
+    [Authorize(Roles = ["Station Supervisor"])]
     public static async Task<RegisterStationResult> RegisterStation(
         [Service] MafClient mafClient,
         string facilityId,
         string stationId,
+        IReadOnlyList<string>? predecessorStationIds,
+        bool isLoadingDock,
         CancellationToken cancellationToken) =>
         await CallMafAndUnwrap<RegisterStationResult>(
             mafClient,
@@ -45,13 +47,15 @@ public static partial class Mutation
             {
                 ["facilityId"] = facilityId,
                 ["stationId"] = stationId,
+                ["predecessorStationIds"] = predecessorStationIds ?? [],
+                ["isLoadingDock"] = isLoadingDock,
             },
             cancellationToken);
 
     // Equipment registration: routed through MAF to the Claude Haiku Server's tool
     // (register_equipment), which itself calls back into the Internal Functionality Server -
     // same Haiku-drives-workflow/Internal-owns-persistence seam as the tools underneath it.
-    [Authorize]
+    [Authorize(Roles = ["Station Supervisor"])]
     public static async Task<RegisterStationEquipmentResult> RegisterStationEquipment(
         [Service] MafClient mafClient,
         string facilityId,
@@ -82,7 +86,7 @@ public static partial class Mutation
         if (result.IsError)
         {
             var text = result.FirstText ?? $"{toolName} failed.";
-            var code = text.Contains("already registered") || text.Contains("already exists")
+            var code = text.Contains("already registered") || text.Contains("already exists") || text.Contains("cannot feed into a new successor")
                 ? "CONFLICT"
                 : text.Contains("is not registered")
                     ? "NOT_FOUND"

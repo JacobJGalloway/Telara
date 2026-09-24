@@ -1,0 +1,84 @@
+@page "/login"
+@layout LoginLayout
+@inject TelaraAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Log In</PageTitle>
+
+<div class="login-wrapper">
+    <div class="login-logo">
+        <img src="assets/telara-lockup-light.svg" alt="Telara" />
+    </div>
+
+    <div class="card login-card">
+        <div class="card-body">
+            <EditForm Model="@model" OnValidSubmit="HandleLoginAsync" FormName="login">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <InputText id="email" class="form-control" @bind-Value="model.Email" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" />
+                </div>
+
+                @if (errorMessage is not null)
+                {
+                    <p class="text-danger">@errorMessage</p>
+                }
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">Log In</button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly LoginModel model = new();
+    private string? errorMessage;
+    private bool isSubmitting;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private async Task HandleLoginAsync()
+    {
+        errorMessage = null;
+        isSubmitting = true;
+        try
+        {
+            await AuthStateProvider.LoginAsync(model.Email, model.Password);
+            Navigation.NavigateTo(IsSafeLocalReturnUrl(ReturnUrl) ? ReturnUrl! : "/dashboard");
+        }
+        catch (GraphQlRequestException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    // Only a same-app relative path is a safe redirect target - "/dashboard" is fine, but
+    // "//evil.example.com" or "https://evil.example.com" (both accepted as-is by
+    // NavigationManager.NavigateTo) would send an authenticated user off-site.
+    private static bool IsSafeLocalReturnUrl(string? returnUrl) =>
+        returnUrl is { Length: > 1 }
+        && returnUrl[0] == '/'
+        && returnUrl[1] != '/'
+        && returnUrl[1] != '\\';
+
+    private class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = "";
+    }
+}

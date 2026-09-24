@@ -170,13 +170,33 @@ namespace Telara.Domain.Migrations
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("station_id");
 
+                    b.Property<bool>("IsLoadingDock")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_loading_dock");
+
                     b.Property<DateTime?>("LastOperatorActionUtc")
                         .HasColumnType("datetime2")
                         .HasColumnName("last_operator_action_utc");
 
+                    b.Property<string>("NextStationId")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("next_station_id");
+
+                    b.Property<decimal?>("TargetOutputPerShift")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("target_output_per_shift");
+
                     b.HasKey("FacilityId", "StationId");
 
-                    b.ToTable("Stations", "dbo");
+                    b.HasIndex("FacilityId", "NextStationId");
+
+                    b.ToTable("Stations", "dbo", t =>
+                        {
+                            t.HasCheckConstraint("CK_Stations_LoadingDock_NoSuccessor", "NOT ([is_loading_dock] = 1 AND [next_station_id] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Stations_NextStationId_NotSelf", "[next_station_id] IS NULL OR [next_station_id] <> [station_id]");
+                        });
                 });
 
             modelBuilder.Entity("Telara.Domain.Entities.StationEquipment", b =>
@@ -219,6 +239,41 @@ namespace Telara.Domain.Migrations
                     b.HasIndex("EquipmentTypeId");
 
                     b.ToTable("StationEquipment", "dbo");
+                });
+
+            modelBuilder.Entity("Telara.Domain.Entities.StationOutputRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("FacilityId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("facility_id");
+
+                    b.Property<DateTime>("RecordedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("recorded_at_utc");
+
+                    b.Property<string>("StationId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("station_id");
+
+                    b.Property<decimal>("UnitsProduced")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("units_produced");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacilityId", "StationId", "RecordedAtUtc");
+
+                    b.ToTable("StationOutputRecords", "dbo");
                 });
 
             modelBuilder.Entity("Telara.Domain.Entities.User", b =>
@@ -295,6 +350,16 @@ namespace Telara.Domain.Migrations
                     b.Navigation("StationEquipment");
                 });
 
+            modelBuilder.Entity("Telara.Domain.Entities.Station", b =>
+                {
+                    b.HasOne("Telara.Domain.Entities.Station", "NextStation")
+                        .WithMany()
+                        .HasForeignKey("FacilityId", "NextStationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("NextStation");
+                });
+
             modelBuilder.Entity("Telara.Domain.Entities.StationEquipment", b =>
                 {
                     b.HasOne("Telara.Domain.Entities.EquipmentType", "EquipmentType")
@@ -310,6 +375,17 @@ namespace Telara.Domain.Migrations
                         .IsRequired();
 
                     b.Navigation("EquipmentType");
+
+                    b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("Telara.Domain.Entities.StationOutputRecord", b =>
+                {
+                    b.HasOne("Telara.Domain.Entities.Station", "Station")
+                        .WithMany()
+                        .HasForeignKey("FacilityId", "StationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Station");
                 });

@@ -1,10 +1,15 @@
 <Solution>
   <Project Path="../../Tests/DotNet/Telara.Core.Tests/Telara.Core.Tests.csproj" />
   <Project Path="../../Tests/DotNet/Telara.Domain.Tests/Telara.Domain.Tests.csproj" />
+  <Project Path="../../Tests/DotNet/Telara.Mcp.Haiku.Tests/Telara.Mcp.Haiku.Tests.csproj" />
+  <Project Path="../../Tests/DotNet/Telara.Mcp.Internal.Tests/Telara.Mcp.Internal.Tests.csproj" />
+  <Project Path="../../Tests/DotNet/Telara.OpsApi.Tests/Telara.OpsApi.Tests.csproj" />
   <Project Path="Telara.Core/Telara.Core.csproj" />
   <Project Path="Telara.Domain/Telara.Domain.csproj" />
   <Project Path="../../McpServers/Telara.Maf.Orchestrator/Telara.Maf.Orchestrator.csproj" />
   <Project Path="../../McpServers/Telara.Mcp.Haiku/Telara.Mcp.Haiku.csproj" />
   <Project Path="../../McpServers/Telara.Mcp.Internal/Telara.Mcp.Internal.csproj" />
   <Project Path="Telara.OpsApi/Telara.OpsApi.csproj" />
+  <Project Path="../../Frontend/Islands/Web/Telara.Client/Telara.Client.csproj" />
+  <Project Path="../../Frontend/Islands/Web/Telara.Web/Telara.Web.csproj" />
 </Solution>

@@ -1,0 +1,213 @@
+@* Dynamic isometric station-flow diagram - geometry reverse-engineered from the Claude Design
+   prototype's fixed 5-node SVG (Telara Station Supervisor Dashboard v2.dc.html): a diamond top
+   face plus left/right parallelogram faces per station, colored per DESIGN.md's §2 "Isometric
+   prism faces" table. Computed here for any station count returned by GetStationWorkflow rather
+   than hardcoded to one line's shape. Filling the full available space and switching orientation
+   dynamically (per DESIGN.md open item) is still 1.4 scope - this pass evenly spaces one
+   horizontal row and staggers alternating nodes for the same "flow" look as the mockup.
+   Boundary boxes: a Station is never its own root - its upstream is either the Raw Materials
+   depot or another Station's output, and its downstream is either Dispatch (a loading dock,
+   ready for forklift pickup), a Transfer to another Station, or (once branching routing exists)
+   a fan-in/out point. Raw Materials sits off the main row with a plain (non-dashed) connector
+   into the first station; Transfer and Dispatch are appended in-line as regular stops in the row,
+   one per station-to-station hop or terminal dock respectively. None of these are Station domain
+   entities (see ARCHITECTURE.md's RawMaterial/Assembly non-goal) - purely presentational. *@
+@inject GraphQlClient GraphQlClient
+
+<div class="station-flow-diagram">
+    @if (_loading)
+    {
+        <p class="text-muted">Loading workflow…</p>
+    }
+    else if (_error is not null)
+    {
+        <p class="text-danger">@_error</p>
+    }
+    else if (_stations.Count == 0)
+    {
+        <p class="text-muted">No routed line found for this station.</p>
+    }
+    else
+    {
+        var row = BuildRow();
+
+        <svg viewBox="0 -20 @ViewWidth @(ViewHeight + 20)" style="width:100%;height:auto;display:block;background:#12151c;border-radius:6px;">
+            <polyline points="@ConnectorPoints(row.Count)" fill="none" stroke="#6b6d74" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7" />
+
+            @{ var (firstCx, firstCy) = Position(0, row.Count); var (rmCx, rmCy) = RawMaterialsPosition(row.Count); }
+            <line x1="@Fmt(rmCx)" y1="@Fmt(rmCy + HalfHeight)" x2="@Fmt(firstCx)" y2="@Fmt(firstCy - HalfHeight)" stroke="#8fb7ef" stroke-width="1.5" />
+            @RenderBoundaryBox(rmCx, rmCy, "Raw Materials")
+
+            @for (var i = 0; i < row.Count; i++)
+            {
+                var node = row[i];
+                var (cx, cy) = Position(i, row.Count);
+
+                if (node.Station is { } s)
+                {
+                    var status = DeriveStatus(s);
+                    var (topColor, leftColor, rightColor) = ColorsFor(status);
+
+                    <g>
+                        <polygon points="@LeftFace(cx, cy)" fill="@leftColor" fill-opacity="0.5" stroke="@leftColor" stroke-width="3" stroke-linejoin="round" />
+                        <polygon points="@RightFace(cx, cy)" fill="@rightColor" fill-opacity="0.5" stroke="@rightColor" stroke-width="3" stroke-linejoin="round" />
+                        <polygon points="@TopFace(cx, cy)" fill="@topColor" fill-opacity="0.5" stroke="@topColor" stroke-width="3" stroke-linejoin="round" />
+                        <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 20)" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">@s.StationId@(s.IsLoadingDock ? " (dock)" : "")</text>
+                        <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 34)" text-anchor="middle" font-family="'Space Mono',monospace" font-size="10" fill="@topColor">@status</text>
+                    </g>
+                }
+                else
+                {
+                    @RenderBoundaryBox(cx, cy, node.Label!)
+                }
+            }
+        </svg>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string FacilityId { get; set; } = "";
+    [Parameter, EditorRequired] public string StationId { get; set; } = "";
+
+    private const int ViewWidth = 760;
+    private const int ViewHeight = 220;
+    private const int Margin = 60;
+    private const double HalfWidth = 28;
+    private const double HalfHeight = 14;
+    private const double PrismDepth = 24;
+    private const double RowOffset = 32;
+    private const double BaseTop = 70;
+
+    // Same blue used for a station's "unknown" status (ColorsFor's default arm) - boundary boxes
+    // are their own concept, not Stations, so they're colored independently of status derivation
+    // rather than borrowing it incidentally.
+    private static readonly (string top, string left, string right) BoundaryColors = ("#7fb0ef", "#1c4d94", "#2f6fd6");
+
+    private List<WorkflowStation> _stations = [];
+    private bool _loading = true;
+    private string? _error;
+
+    private const string WorkflowQuery = """
+        query StationWorkflow($facilityId: String!, $stationId: String!) {
+          stationWorkflow(facilityId: $facilityId, stationId: $stationId) {
+            stationId
+            isLoadingDock
+            equipment {
+              equipmentId
+              equipmentTypeName
+              status
+            }
+          }
+        }
+        """;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var response = await GraphQlClient.SendAsync<StationWorkflowResponse>(
+                WorkflowQuery, new { facilityId = FacilityId, stationId = StationId });
+            _stations = response.StationWorkflow;
+            _error = null;
+        }
+        catch (GraphQlRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private record RowNode(WorkflowStation? Station, string? Label);
+
+    // Interleaves a Transfer boundary box between every consecutive pair of stations (one per
+    // station-to-station hop), and appends a Dispatch box only when the chain's last station is
+    // genuinely a loading dock - a chain that stops short for any other reason (e.g. the cycle
+    // guard in GetStationWorkflowQueryHandler catching a dangling NextStationId) isn't a real
+    // terminus, so no Dispatch is implied.
+    private List<RowNode> BuildRow()
+    {
+        var row = new List<RowNode>();
+        for (var i = 0; i < _stations.Count; i++)
+        {
+            var station = _stations[i];
+            row.Add(new RowNode(station, null));
+
+            var isLast = i == _stations.Count - 1;
+            if (!isLast)
+                row.Add(new RowNode(null, "Transfer"));
+            else if (station.IsLoadingDock)
+                row.Add(new RowNode(null, "Dispatch"));
+        }
+        return row;
+    }
+
+    private static (double cx, double cy) Position(int index, int rowCount)
+    {
+        var spacing = rowCount > 1 ? (ViewWidth - 2 * Margin) / (double)(rowCount - 1) : 0;
+        var cx = Margin + index * spacing;
+        var cy = BaseTop + (index % 2 == 1 ? RowOffset : 0);
+        return (cx, cy);
+    }
+
+    // Raw Materials sits off the main row (a plain connector line into station 0, not the dashed
+    // hop-to-hop polyline) - raised above the row entirely so it doesn't compete visually with the
+    // alternating stagger, mirroring the mockup's placement above/left of the line's first station.
+    private static (double cx, double cy) RawMaterialsPosition(int rowCount)
+    {
+        var (firstCx, _) = Position(0, rowCount);
+        return (firstCx, BaseTop - RowOffset - PrismDepth);
+    }
+
+    private static string ConnectorPoints(int rowCount) => string.Join(" ", Enumerable.Range(0, rowCount).Select(i =>
+    {
+        var (cx, cy) = Position(i, rowCount);
+        return $"{Fmt(cx)},{Fmt(cy + PrismDepth)}";
+    }));
+
+    private RenderFragment RenderBoundaryBox(double cx, double cy, string label) => @<g>
+        <polygon points="@LeftFace(cx, cy)" fill="@BoundaryColors.left" fill-opacity="0.5" stroke="@BoundaryColors.left" stroke-width="3" stroke-linejoin="round" />
+        <polygon points="@RightFace(cx, cy)" fill="@BoundaryColors.right" fill-opacity="0.5" stroke="@BoundaryColors.right" stroke-width="3" stroke-linejoin="round" />
+        <polygon points="@TopFace(cx, cy)" fill="@BoundaryColors.top" fill-opacity="0.5" stroke="@BoundaryColors.top" stroke-width="3" stroke-linejoin="round" />
+        <text x="@Fmt(cx)" y="@Fmt(cy + HalfHeight + PrismDepth + 20)" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">@label</text>
+    </g>;
+
+    private static string TopFace(double cx, double cy) =>
+        $"{Fmt(cx - HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy - HalfHeight)} {Fmt(cx + HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy + HalfHeight)}";
+
+    private static string LeftFace(double cx, double cy) =>
+        $"{Fmt(cx - HalfWidth)},{Fmt(cy)} {Fmt(cx)},{Fmt(cy + HalfHeight)} {Fmt(cx)},{Fmt(cy + HalfHeight + PrismDepth)} {Fmt(cx - HalfWidth)},{Fmt(cy + PrismDepth)}";
+
+    private static string RightFace(double cx, double cy) =>
+        $"{Fmt(cx)},{Fmt(cy + HalfHeight)} {Fmt(cx + HalfWidth)},{Fmt(cy)} {Fmt(cx + HalfWidth)},{Fmt(cy + PrismDepth)} {Fmt(cx)},{Fmt(cy + HalfHeight + PrismDepth)}";
+
+    private static string Fmt(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    // No Herbie/constraint-reasoning service exists yet (that's the deferred Sonnet MCP Server -
+    // see ARCHITECTURE.md), so station status is a plain worst-of rollup over its own equipment:
+    // any faulted equipment makes the station critical, any idle equipment (with nothing faulted)
+    // makes it watch, otherwise operational.
+    private static string DeriveStatus(WorkflowStation station)
+    {
+        if (station.Equipment.Count == 0)
+            return "unknown";
+        if (station.Equipment.Any(e => e.Status == "Faulted"))
+            return "critical";
+        if (station.Equipment.Any(e => e.Status == "Idle"))
+            return "watch";
+        return "operational";
+    }
+
+    // Hex values match DESIGN.md §2 "Isometric prism faces" table exactly.
+    private static (string top, string left, string right) ColorsFor(string status) => status switch
+    {
+        "critical" => ("#ef5b4e", "#8a1f16", "#c93b2e"),
+        "watch" => ("#f0b429", "#8a5f08", "#c98a12"),
+        "operational" => ("#22e08f", "#0e6b46", "#189a63"),
+        _ => ("#7fb0ef", "#1c4d94", "#2f6fd6"),
+    };
+}

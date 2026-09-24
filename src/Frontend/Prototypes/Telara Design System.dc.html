@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  body{margin:0;background:#141416;}
+  a{color:#8fb7ef;} a:hover{color:#aecbf5;}
+</style>
+</helmet>
+
+<div style="font-family:'Inter',sans-serif;background:#141416;padding:56px 0 96px;">
+  <div style="max-width:960px;margin:0 auto;padding:0 32px;">
+
+    <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#a7acb5;margin-bottom:8px;">Design System &mdash; v0.2 &middot; handoff</div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:600;color:#f2f3f5;margin:0 0 16px;letter-spacing:-0.02em;">Telara Design System</h1>
+    <p style="font-size:16px;line-height:1.7;color:#a7acb5;max-width:680px;margin:0 0 48px;">A unified manufacturing operations platform built on Theory of Constraints principles, making station, equipment, and product telemetry visible in real time across every layer of the organization. This document is the working reference for how Telara looks, sounds, and is built &mdash; assembled from README.md, OVERVIEW.md, ARCHITECTURE.md, DECISIONS.md, and the three role dashboards. For the machine-readable version Claude Code should read, see <code style="background:#242424;padding:2px 6px;border-radius:2px;">DESIGN.md</code>.</p>
+
+    <!-- INDEX -->
+    <div style="background:#242424;border:1px solid #3f3f45;border-radius:6px;padding:20px 24px;margin-bottom:56px;">
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">On this page</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;">
+        <a href="#context" style="text-decoration:none;">Product context</a>
+        <a href="#content" style="text-decoration:none;">Content &amp; voice</a>
+        <a href="#color" style="text-decoration:none;">Color</a>
+        <a href="#type" style="text-decoration:none;">Type</a>
+        <a href="#foundations" style="text-decoration:none;">Spacing, radii, motion</a>
+        <a href="#icons" style="text-decoration:none;">Iconography</a>
+        <a href="#components" style="text-decoration:none;">Components</a>
+        <a href="#files" style="text-decoration:none;">Related files</a>
+      </div>
+    </div>
+
+    <!-- CONTEXT -->
+    <h2 id="context" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 16px;">Product context</h2>
+    <p style="font-size:15px;line-height:1.7;color:#a7acb5;margin:0 0 12px;">Telara monitors stations, equipment, and sensor telemetry to find the floor's true constraint (&quot;Herbie&quot;, after the Theory of Constraints) rather than rewarding local efficiency that just piles up inventory in front of a bottleneck. Six planned service domains: Equipment &amp; Sensor Monitoring, Production &amp; Product Tracking, Station Management, Personnel &amp; Scheduling, Analytics &amp; Reporting, Escalation &amp; Notification.</p>
+    <p style="font-size:15px;line-height:1.7;color:#a7acb5;margin:0 0 12px;">Frontend is a Blazor WebAssembly &quot;Island&quot; (desktop/laptop) talking to backend services over GraphQL. Backend: .NET 10 microservices, an Internal Functionality MCP Server (deterministic data lookups) and a Claude Haiku MCP Server (linear, high-throughput ingestion/workflow) sit behind the UI today; a stateless orchestrator sequencing tool calls (linear + parallel) in front of both is next sprint's work, ahead of a future Claude Sonnet server for constraint reasoning.</p>
+    <p style="font-size:15px;line-height:1.7;color:#a7acb5;margin:0 0 48px;">Three role-gated dashboards, all built: <strong style="color:#f2f3f5;">Station Supervisor</strong> (one line, one shift, station by station &mdash; isometric station flow), <strong style="color:#f2f3f5;">Shift Manager</strong> (multiple lines, one shift, each line as a single unit &mdash; constraint-type set diagram and shift handoff), <strong style="color:#f2f3f5;">Plant Director</strong> (whole facility across shifts and weeks &mdash; charts, trends, part table; no isometric view). Role sets the landing route; read access is hierarchical, landing is not.</p>
+
+    <!-- CONTENT -->
+    <h2 id="content" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 16px;">Content &amp; voice</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:48px;">
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Tone</div>
+        <div style="font-size:14px;color:#a7acb5;line-height:1.6;">Direct, engineering-forward, precise. Written like the person who has to act on the alert, not market it. No exclamation marks, no sparkle.</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Vocabulary</div>
+        <div style="font-size:14px;color:#a7acb5;line-height:1.6;">TOC terms are load-bearing, not flavor: &quot;Herbie&quot; (the constraint), backlog / surplus, station vs. equipment vs. sensor. Use them precisely &mdash; don't soften into generic &quot;issue&quot; or &quot;problem&quot;.</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Casing</div>
+        <div style="font-size:14px;color:#a7acb5;line-height:1.6;">Title Case for page titles and primary actions (&quot;Station Supervisor&quot;, &quot;Acknowledge&quot;). Sentence case for body copy and alert descriptions.</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Numbers &amp; status</div>
+        <div style="font-size:14px;color:#a7acb5;line-height:1.6;">State the delta, not just the alarm: &quot;backlog +41&quot;, not &quot;backlog detected&quot;. Timestamps in 24h, Space Mono. Em dash for empty/unknown values.</div>
+      </div>
+    </div>
+
+    <!-- COLOR -->
+    <h2 id="color" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 4px;">Color</h2>
+    <p style="font-size:14px;color:#a7acb5;margin:0 0 20px;max-width:680px;">Full swatches, hex values and measured contrast ratios live in <a href="#files">Telara Brand Foundations</a>. Summary: same hue (blue 215&deg;, green 155&deg;), different lightness per mode, chosen to clear 7:1 (AAA) against each mode's base. One rule worth carrying into code: <code style="background:#242424;padding:2px 6px;border-radius:2px;">#6b6d74</code> is a rule-and-fill grey only &mdash; at 2.73:1 on panel it must never carry text. Labels, eyebrows, axis ticks and hold reasons all use <code style="background:#242424;padding:2px 6px;border-radius:2px;">#a7acb5</code> (6.19:1).</p>
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+      <div style="flex:1;height:56px;border-radius:4px;background:#8fb7ef;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;color:#242424;">blue &middot; dark-fg</div>
+      <div style="flex:1;height:56px;border-radius:4px;background:#154991;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;color:#eeeeee;">blue &middot; light-fg</div>
+      <div style="flex:1;height:56px;border-radius:4px;background:#1ed488;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;color:#242424;">green &middot; dark-fg</div>
+      <div style="flex:1;height:56px;border-radius:4px;background:#0d5939;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;color:#eeeeee;">green &middot; light-fg</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:48px;">
+      <div style="flex:1;height:44px;border-radius:4px;background:#d9a712;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:#242424;">watch</div>
+      <div style="flex:1;height:44px;border-radius:4px;background:#f5993d;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:#242424;">warning</div>
+      <div style="flex:1;height:44px;border-radius:4px;background:#f39991;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:#242424;">critical (dark)</div>
+      <div style="flex:1;height:44px;border-radius:4px;background:#971c11;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:#eeeeee;">critical (light)</div>
+      <div style="flex:1;height:44px;border-radius:4px;background:#242424;border:1px solid #3f3f45;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:#a7acb5;">graphite base</div>
+      <div style="flex:1;height:44px;border-radius:4px;background:#eeeeee;border:1px solid #d7dbe3;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:#5b5f68;">offwhite base</div>
+    </div>
+
+    <!-- TYPE -->
+    <h2 id="type" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 20px;">Type</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:48px;">
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#f2f3f5;margin-bottom:8px;">Aa</div>
+        <div style="font-size:12px;color:#a7acb5;">Space Grotesk 600 &middot; display, headings, page titles</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-family:'Inter',sans-serif;font-size:22px;font-weight:500;color:#f2f3f5;margin-bottom:8px;">Aa</div>
+        <div style="font-size:12px;color:#a7acb5;">Inter 400/500 &middot; UI, body, labels</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-family:'Space Mono',monospace;font-size:22px;color:#f2f3f5;margin-bottom:8px;">Aa</div>
+        <div style="font-size:12px;color:#a7acb5;">Space Mono &middot; IDs, timestamps, sensor readouts</div>
+      </div>
+    </div>
+
+    <!-- FOUNDATIONS -->
+    <h2 id="foundations" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 16px;">Spacing, radii, motion</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:48px;">
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Spacing</div>
+        <div style="font-size:13px;color:#a7acb5;line-height:1.6;font-family:'Space Mono',monospace;">4px base grid: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Radii</div>
+        <div style="font-size:13px;color:#a7acb5;line-height:1.6;font-family:'Space Mono',monospace;">2 / 4 / 6px, 999px pill. Mostly sharp &mdash; matches the industrial reference imagery, not rounded-card conventions.</div>
+      </div>
+      <div style="background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;color:#f2f3f5;margin-bottom:6px;">Motion</div>
+        <div style="font-size:13px;color:#a7acb5;line-height:1.6;">Fades only, 120&ndash;320ms, cubic-bezier(0.22,1,0.36,1). No bounces, no slide-ins. Status badges may carry a subtle colored glow, not a scale/bounce.</div>
+      </div>
+    </div>
+
+    <!-- ICONOGRAPHY -->
+    <h2 id="icons" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 12px;">Iconography</h2>
+    <p style="font-size:15px;line-height:1.7;color:#a7acb5;margin:0 0 48px;max-width:680px;"><strong style="color:#f2f3f5;">Font Awesome (Free)</strong> &mdash; well-maintained, broad free tier, CDN-loadable, consistent outline weight across the set. Default size 20&ndash;24px inline, color inherits via <code style="background:#242424;padding:2px 6px;border-radius:2px;">currentColor</code>. Not yet copied into the project &mdash; do that when the first real icon usage lands (nav items, alert severities). No emoji, no unicode glyphs as icons, matching the plant-floor tool tone.</p>
+
+    <!-- COMPONENTS -->
+    <h2 id="components" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 12px;">Components</h2>
+    <p style="font-size:14px;color:#a7acb5;margin:0 0 20px;max-width:680px;">Inventory below is scoped from the closest sibling system (Switchyard) as a coverage checklist, restyled to Telara tokens &mdash; not copied styling. All three dashboards style these inline rather than as shared files &mdash; deliberate, so each screen can be riffed on independently. <strong style="color:#a7acb5;">DESIGN.md &sect;5 carries the full built/not-built inventory, including the Telara-specific primitives: StationNode, LineUnitCard, IngestionRoot, SetDiagram, HandoffBar, KpiTile.</strong></p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:56px;">
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">Logo / FullLogo</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">Mark + wordmark lockup, light/dark</div></div>
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">Button</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">primary / secondary / ghost / danger</div></div>
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">Field / Input / Select</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">Form primitives</div></div>
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">Status Badge</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">good / watch / warning / critical tones</div></div>
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">Modal</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">Dialog with overlay</div></div>
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">DataTable</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">Bordered grid, visible cell lines</div></div>
+      <div style="background:#242424;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#f2f3f5;">Header + NavMenu</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">App chrome; sidebar variant built in dashboard</div></div>
+      <div style="background:#2b2b2e;border:1px solid #8fb7ef;border-radius:6px;padding:16px 20px;"><div style="font-size:13px;font-weight:600;color:#8fb7ef;">StationNode &middot; new</div><div style="font-size:12px;color:#a7acb5;margin-top:4px;">Isometric flow-diagram marker &mdash; Telara-specific, no sibling equivalent</div></div>
+    </div>
+
+    <!-- FILES -->
+    <h2 id="files" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#8fb7ef;margin:0 0 16px;">Related files</h2>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:40px;">
+      <div style="font-size:14px;color:#a7acb5;">&bull; <a href="Telara Brand Foundations.dc.html">Telara Brand Foundations</a> &mdash; logo lockups, full color swatches with contrast ratios, type specimens</div>
+      <div style="font-size:14px;color:#a7acb5;">&bull; <code style="background:#242424;padding:2px 6px;border-radius:2px;">DESIGN.md</code> &mdash; tokens, role/route map, screen-to-component map, open items. The file for Claude Code.</div>
+      <div style="font-size:14px;color:#a7acb5;">&bull; <a href="Telara Station Supervisor Dashboard v2.dc.html">Telara Station Supervisor Dashboard</a> &mdash; dark/light, isometric station flow</div>
+      <div style="font-size:14px;color:#a7acb5;">&bull; <a href="Telara Shift Manager Dashboard.dc.html">Telara Shift Manager Dashboard</a> &mdash; line units, ingestion rollup, constraint-type set diagram, shift handoff</div>
+      <div style="font-size:14px;color:#a7acb5;">&bull; <a href="Telara Plant Director Dashboard.dc.html">Telara Plant Director Dashboard</a> &mdash; KPI tiles, throughput vs. target, constraint history, part table</div>
+      <div style="font-size:14px;color:#a7acb5;">&bull; <code style="background:#242424;padding:2px 6px;border-radius:2px;">assets/</code> &mdash; mark, wordmark, lockup SVGs (dark/light)</div>
+    </div>
+
+    <div style="border-top:1px solid #2b2b2e;padding-top:24px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:#f2f3f5;margin-bottom:8px;">Open before this is complete</div>
+      <ul style="font-size:14px;color:#a7acb5;line-height:1.7;padding-left:20px;margin:0;">
+        <li>Light &quot;blueprint&quot; mode is built for Station Supervisor only &mdash; Shift Manager and Plant Director still need the light pass. Tokens exist; no layout changes required.</li>
+        <li>Font Awesome not yet copied into the project &mdash; do it when the first real icon usage lands. Nav rails currently use letter initials as placeholders.</li>
+        <li>Set diagram covers two of four readings (constraint type, shift handoff). Lines &times; shifts &times; parts and station contention are deferred.</li>
+        <li>Station-flow diagram is linear only; branching workflows are future work. Prism fill opacity is still constant, not yet wired to condition severity.</li>
+        <li>Director throughput chart bars sit short of the card height &mdash; cosmetic, widen the plot.</li>
+        <li>Content &amp; voice section is inferred from README/OVERVIEW tone, not yet reviewed against real in-product copy.</li>
+        <li>Constraint-reasoning UI (the actual Herbie-finding logic surfaced to users) waits on the Sonnet MCP server, not this sprint.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

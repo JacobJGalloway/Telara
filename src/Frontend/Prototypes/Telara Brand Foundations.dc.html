@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  body{margin:0;background:#141416;}
+</style>
+</helmet>
+
+<div style="font-family:'Inter',sans-serif;background:#141416;padding:48px 0 96px;">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px;">
+
+    <div style="margin-bottom:56px;">
+      <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#a7acb5;margin-bottom:8px;">Design System &mdash; Draft v0.1</div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:600;color:#f2f3f5;margin:0 0 12px;letter-spacing:-0.02em;">Telara Brand Foundations</h1>
+      <p style="font-size:16px;line-height:1.6;color:#a7acb5;max-width:680px;margin:0;">Manufacturing operations platform built on Theory of Constraints principles. This guide covers the mark, a verified-AAA color system for dark &quot;control room&quot; and light &quot;blueprint&quot; modes, and type.</p>
+    </div>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8fb7ef;margin:0 0 4px;">Logo</h2>
+    <p style="font-size:14px;color:#a7acb5;margin:0 0 20px;max-width:640px;">Original proposal &mdash; the reference images you sent were generic stock-template previews (not usable as source), so this mark is designed fresh. Five nodes converge to a single point: flow narrowing to a constraint, then resolving in green &mdash; &quot;Herbie&quot;, made visible.</p>
+
+    <div style="display:flex;gap:16px;margin-bottom:16px;">
+      <div style="flex:1;background:#242424;border:1px solid #3f3f45;border-radius:6px;padding:32px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+        <img src="assets/telara-lockup-dark.svg" alt="Telara logo, dark background" style="width:260px;"/>
+        <img src="assets/telara-mark.svg" alt="Telara mark" style="width:120px;"/>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;">for dark surfaces</span>
+      </div>
+      <div style="flex:1;background:#eeeeee;border:1px solid #d7dbe3;border-radius:6px;padding:32px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+        <img src="assets/telara-lockup-light.svg" alt="Telara logo, light background" style="width:260px;"/>
+        <img src="assets/telara-mark.svg" alt="Telara mark" style="width:120px;"/>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:#5b5f68;">for light surfaces</span>
+      </div>
+    </div>
+    <p style="font-size:13px;color:#a7acb5;margin:0 0 56px;">Files in <code style="background:#242424;padding:2px 6px;border-radius:2px;">assets/</code>: mark, wordmark-dark/light, lockup-dark/light (SVG). Flag for you: these are placeholders for feedback, not a finished trademark-cleared mark &mdash; tell me what to push further.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8fb7ef;margin:0 0 4px;">Color &mdash; verified against WCAG AAA</h2>
+    <p style="font-size:14px;color:#a7acb5;margin:0 0 20px;max-width:680px;">Your blue/green concept, checked pixel-by-pixel: I computed contrast ratios for every tone against both mode backgrounds and picked the lightness step that clears <strong style="color:#a7acb5;">7:1</strong> (AAA for body text) on each. Same hue, different lightness per mode &mdash; light tones read as text on dark, dark tones read as text on light.</p>
+
+    <div style="display:flex;gap:16px;margin-bottom:24px;">
+      <div style="flex:1;background:#242424;border-radius:6px;padding:20px;">
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Dark mode &middot; on #242424</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#8fb7ef;flex-shrink:0;"></div>
+            <div><div style="color:#f2f3f5;font-size:13px;font-weight:500;">Blue &middot; #8FB7EF</div><div style="color:#a7acb5;font-size:12px;font-family:'Space Mono',monospace;">7.53:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#1ed488;flex-shrink:0;"></div>
+            <div><div style="color:#f2f3f5;font-size:13px;font-weight:500;">Green &middot; #1ED488</div><div style="color:#a7acb5;font-size:12px;font-family:'Space Mono',monospace;">8.00:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#d9a712;flex-shrink:0;"></div>
+            <div><div style="color:#f2f3f5;font-size:13px;font-weight:500;">Amber (watch) &middot; #D9A712</div><div style="color:#a7acb5;font-size:12px;font-family:'Space Mono',monospace;">7.01:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#f5993d;flex-shrink:0;"></div>
+            <div><div style="color:#f2f3f5;font-size:13px;font-weight:500;">Orange (warn) &middot; #F5993D</div><div style="color:#a7acb5;font-size:12px;font-family:'Space Mono',monospace;">7.03:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#f39991;flex-shrink:0;"></div>
+            <div><div style="color:#f2f3f5;font-size:13px;font-weight:500;">Red (critical) &middot; #F39991</div><div style="color:#a7acb5;font-size:12px;font-family:'Space Mono',monospace;">7.23:1 AAA</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;background:#eeeeee;border-radius:6px;padding:20px;">
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:#5b5f68;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Light mode &middot; on #EEEEEE</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#154991;flex-shrink:0;"></div>
+            <div><div style="color:#17181b;font-size:13px;font-weight:500;">Blue &middot; #154991</div><div style="color:#5b5f68;font-size:12px;font-family:'Space Mono',monospace;">7.56:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#0d5939;flex-shrink:0;"></div>
+            <div><div style="color:#17181b;font-size:13px;font-weight:500;">Green &middot; #0D5939</div><div style="color:#5b5f68;font-size:12px;font-family:'Space Mono',monospace;">7.23:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#634c08;flex-shrink:0;"></div>
+            <div><div style="color:#17181b;font-size:13px;font-weight:500;">Amber (watch) &middot; #634C08</div><div style="color:#5b5f68;font-size:12px;font-family:'Space Mono',monospace;">7.05:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#794006;flex-shrink:0;"></div>
+            <div><div style="color:#17181b;font-size:13px;font-weight:500;">Orange (warn) &middot; #794006</div><div style="color:#5b5f68;font-size:12px;font-family:'Space Mono',monospace;">7.10:1 AAA</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:4px;background:#971c11;flex-shrink:0;"></div>
+            <div><div style="color:#17181b;font-size:13px;font-weight:500;">Red (critical) &middot; #971C11</div><div style="color:#5b5f68;font-size:12px;font-family:'Space Mono',monospace;">7.27:1 AAA</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:#a7acb5;margin:0 0 24px;max-width:680px;">Mid-tones for fills/borders (not text, so 3:1 non-text is the relevant bar, not 7:1) &mdash; blue <code style="background:#242424;padding:2px 6px;border-radius:2px;">#2F6FD6</code>, green <code style="background:#242424;padding:2px 6px;border-radius:2px;">#1F9D63</code>. Status badge fills trend more opaque as severity rises &mdash; 12% &rarr; 32% alpha from healthy to critical &mdash; so urgency reads at a glance even in peripheral vision.</p>
+
+    <div style="display:flex;gap:16px;margin-bottom:56px;">
+      <div style="flex:1;background:#242424;border-radius:6px;padding:20px;display:flex;gap:8px;">
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(30,212,136,0.12);color:#1ed488;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">12%</div>
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(217,167,18,0.16);color:#d9a712;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">16%</div>
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(245,153,61,0.22);color:#f5993d;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">22%</div>
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(243,153,145,0.30);color:#f39991;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">30%</div>
+      </div>
+      <div style="flex:1;background:#eeeeee;border-radius:6px;padding:20px;display:flex;gap:8px;">
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(13,89,57,0.08);color:#0d5939;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">8%</div>
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(99,76,8,0.10);color:#634c08;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">10%</div>
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(121,64,6,0.12);color:#794006;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">12%</div>
+        <div style="flex:1;padding:10px;border-radius:4px;background:rgba(151,28,17,0.14);color:#971c11;font-size:12px;text-align:center;font-family:'Space Mono',monospace;">14%</div>
+      </div>
+    </div>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8fb7ef;margin:0 0 4px;">Neutrals &amp; surfaces</h2>
+    <p style="font-size:14px;color:#a7acb5;margin:0 0 20px;max-width:680px;">Dark mode: graphite scale for a low-light control room. Light mode: near-white with blue-tinted hairlines for the &quot;blueprint&quot; feel &mdash; no gradients, no textures, flat panels throughout.</p>
+    <div style="display:flex;gap:16px;margin-bottom:56px;">
+      <div style="flex:1;background:#1b1b1d;border-radius:6px;padding:20px;">
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#141416;"></div><div style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;margin-top:6px;">#141416 deep</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#242424;"></div><div style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;margin-top:6px;">#242424 base</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#2b2b2e;"></div><div style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;margin-top:6px;">#2B2B2E surface</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#333337;"></div><div style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;margin-top:6px;">#333337 raised</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#3f3f45;"></div><div style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;margin-top:6px;">#3F3F45 border</div></div>
+        </div>
+      </div>
+      <div style="flex:1;background:#e2e4e8;border-radius:6px;padding:20px;">
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#e2e4e8;border:1px solid #d7dbe3;"></div><div style="font-size:11px;color:#5b5f68;font-family:'Space Mono',monospace;margin-top:6px;">#E2E4E8 deep</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#eeeeee;border:1px solid #d7dbe3;"></div><div style="font-size:11px;color:#5b5f68;font-family:'Space Mono',monospace;margin-top:6px;">#EEEEEE base</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#ffffff;border:1px solid #d7dbe3;"></div><div style="font-size:11px;color:#5b5f68;font-family:'Space Mono',monospace;margin-top:6px;">#FFFFFF surface</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#ffffff;border:1px solid #c9d3e6;"></div><div style="font-size:11px;color:#5b5f68;font-family:'Space Mono',monospace;margin-top:6px;">#C9D3E6 grid line</div></div>
+          <div style="flex:1;"><div style="height:48px;border-radius:4px;background:#ffffff;border:2px solid #154991;"></div><div style="font-size:11px;color:#5b5f68;font-family:'Space Mono',monospace;margin-top:6px;">#154991 rule</div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8fb7ef;margin:0 0 20px;">Type</h2>
+    <div style="background:#242424;border-radius:6px;padding:28px;margin-bottom:12px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:600;color:#f2f3f5;letter-spacing:-0.02em;">Station 4 is Herbie</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-top:8px;">Space Grotesk 600 &middot; display / headings</div>
+    </div>
+    <div style="background:#242424;border-radius:6px;padding:28px;margin-bottom:12px;">
+      <div style="font-family:'Inter',sans-serif;font-size:16px;color:#f2f3f5;line-height:1.6;max-width:560px;">Backlog is building upstream of Riveting. Cutting has produced 41 more units than Riveting can consume this shift.</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-top:12px;">Inter 400/500 &middot; UI &amp; body text</div>
+    </div>
+    <div style="background:#242424;border-radius:6px;padding:28px;margin-bottom:56px;">
+      <div style="font-family:'Space Mono',monospace;font-size:16px;color:#1ed488;">RVT-02 &middot; 13:42:07 &middot; BACKLOG +41</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:#a7acb5;text-transform:uppercase;letter-spacing:0.06em;margin-top:12px;">Space Mono &middot; station IDs, timestamps, sensor readouts</div>
+    </div>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8fb7ef;margin:0 0 20px;">Spacing &amp; radii</h2>
+    <div style="background:#242424;border-radius:6px;padding:28px;display:flex;align-items:flex-end;gap:12px;margin-bottom:56px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:4px;height:4px;background:#8fb7ef;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">4</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:8px;height:8px;background:#8fb7ef;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">8</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:16px;height:16px;background:#8fb7ef;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">16</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:24px;height:24px;background:#8fb7ef;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">24</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:32px;height:32px;background:#8fb7ef;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">32</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:48px;height:48px;background:#8fb7ef;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">48</span></div>
+      <div style="width:1px;height:48px;background:#3f3f45;margin:0 8px;"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:48px;height:48px;background:#1f9d63;border-radius:2px;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">radius 2</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:48px;height:48px;background:#1f9d63;border-radius:4px;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">radius 4</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><div style="width:48px;height:48px;background:#1f9d63;border-radius:6px;"></div><span style="font-size:11px;color:#a7acb5;font-family:'Space Mono',monospace;">radius 6</span></div>
+    </div>
+
+    <div style="border-top:1px solid #2b2b2e;padding-top:24px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:#f2f3f5;margin-bottom:8px;">Open for your call</div>
+      <ul style="font-size:14px;color:#a7acb5;line-height:1.7;padding-left:20px;margin:0;">
+        <li>Logo is an original proposal, not refined from your sketch (the uploads were generic stock previews) &mdash; push it further or pick a different concept entirely.</li>
+        <li>Blue/green hues can shift (still hue-215/155) without breaking AAA &mdash; happy to try alternates.</li>
+        <li>See the companion Shift Supervisor dashboard file for the palette and type applied to a real screen.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

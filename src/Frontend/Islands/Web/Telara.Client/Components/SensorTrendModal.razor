@@ -1,0 +1,146 @@
+@* Click-through target from StationFlowDiagram's hover tooltip - "enough data to look for trends",
+   not the single latest reading the tooltip already covers. Scoped by a time window (TrendWindow)
+   rather than a row-count limit since GetSensorReadings only exposes UseFiltering/UseSorting, not
+   paging - a window is also the more useful trend boundary for a human reader anyway. *@
+@using System.Globalization
+@inject GraphQlClient GraphQlClient
+
+@if (EquipmentId is not null)
+{
+    <div class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.6);" @onclick="Close">
+        <div class="modal-dialog modal-dialog-centered modal-lg" @onclick:stopPropagation="true">
+            <div class="modal-content" style="background:#2b2b2e;border:1px solid #3f3f45;color:#f2f3f5;">
+                <div class="modal-header" style="border-bottom:1px solid #3f3f45;">
+                    <h5 class="modal-title">@EquipmentTypeName &middot; @EquipmentId</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (_loading)
+                    {
+                        <p class="text-muted">Loading trend…</p>
+                    }
+                    else if (_error is not null)
+                    {
+                        <p class="text-danger">@_error</p>
+                    }
+                    else if (_byType.Count == 0)
+                    {
+                        <p class="text-muted">No sensor readings in the last @TrendWindow.TotalHours.ToString("0") hours.</p>
+                    }
+                    else
+                    {
+                        @foreach (var (readingType, points) in _byType)
+                        {
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span style="font-family:'Space Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#a7acb5;">@readingType</span>
+                                    <span style="font-family:'Space Mono',monospace;font-size:12px;color:#f2f3f5;">latest @points[^1].Value.ToString("0.##")</span>
+                                </div>
+                                <svg viewBox="0 0 @Width @Height" width="100%" style="background:#12151c;border-radius:6px;">
+                                    <path d="@PathD(points)" fill="none" stroke="#8fb7ef" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </div>
+                        }
+
+                        <table class="table table-sm table-dark">
+                            <thead><tr><th>Type</th><th>Value</th><th>Recorded</th></tr></thead>
+                            <tbody>
+                                @foreach (var p in _points.AsEnumerable().Reverse().Take(20))
+                                {
+                                    <tr><td>@p.ReadingType</td><td>@p.Value.ToString("0.##")</td><td>@p.ReadingAtUtc.ToLocalTime().ToString("g")</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? FacilityId { get; set; }
+    [Parameter] public string? StationId { get; set; }
+    [Parameter] public string? EquipmentId { get; set; }
+    [Parameter] public string EquipmentTypeName { get; set; } = "";
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private static readonly TimeSpan TrendWindow = TimeSpan.FromHours(2);
+    private const int Width = 400;
+    private const int Height = 60;
+
+    private List<SensorReadingPoint> _points = [];
+    private List<(string ReadingType, List<SensorReadingPoint> Points)> _byType = [];
+    private bool _loading = true;
+    private string? _error;
+    private string? _loadedForEquipmentId;
+
+    private const string TrendQuery = """
+        query SensorTrend($facilityId: String, $stationId: String, $equipmentId: String, $since: DateTime) {
+          sensorReadings(
+            where: { facilityId: { eq: $facilityId }, stationId: { eq: $stationId }, equipmentId: { eq: $equipmentId }, readingAtUtc: { gte: $since } }
+            order: [{ readingAtUtc: ASC }]
+          ) {
+            readingType
+            value
+            readingAtUtc
+          }
+        }
+        """;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EquipmentId is null || EquipmentId == _loadedForEquipmentId)
+            return;
+
+        _loadedForEquipmentId = EquipmentId;
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await GraphQlClient.SendAsync<SensorReadingsResponse>(TrendQuery, new
+            {
+                facilityId = FacilityId,
+                stationId = StationId,
+                equipmentId = EquipmentId,
+                since = DateTime.UtcNow - TrendWindow,
+            });
+            _points = response.SensorReadings;
+            _byType = _points.GroupBy(p => p.ReadingType).Select(g => (g.Key, g.ToList())).ToList();
+        }
+        catch (GraphQlRequestException ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private static string Fmt(double v) => v.ToString(CultureInfo.InvariantCulture);
+
+    private static string PathD(List<SensorReadingPoint> points)
+    {
+        if (points.Count == 0)
+            return "";
+        if (points.Count == 1)
+            return $"M 0,{Fmt(Height / 2.0)} L {Width},{Fmt(Height / 2.0)}";
+
+        var min = (double)points.Min(p => p.Value);
+        var max = (double)points.Max(p => p.Value);
+        var range = max - min;
+        var start = points[0].ReadingAtUtc;
+        var end = points[^1].ReadingAtUtc;
+        var totalSeconds = (end - start).TotalSeconds;
+
+        double X(DateTime t) => totalSeconds <= 0 ? 0 : (t - start).TotalSeconds / totalSeconds * Width;
+        double Y(decimal v) => range <= 0 ? Height / 2.0 : Height - 8 - ((double)v - min) / range * (Height - 16);
+
+        return "M " + string.Join(" L ", points.Select(p => $"{Fmt(X(p.ReadingAtUtc))},{Fmt(Y(p.Value))}"));
+    }
+}
