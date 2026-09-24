@@ -85,7 +85,7 @@ app.MapPost("/api/simulator/station-output-rate", (
 
     instance.OutputRateMultiplier = request.Multiplier;
     return Results.Ok(new { instance.OutputRateMultiplier });
-});
+}).RequireAuthorization();
 
 app.RunWithGraphQLCommands(args);
 

@@ -51,7 +51,7 @@
         try
         {
             await AuthStateProvider.LoginAsync(model.Email, model.Password);
-            Navigation.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/dashboard" : ReturnUrl);
+            Navigation.NavigateTo(IsSafeLocalReturnUrl(ReturnUrl) ? ReturnUrl! : "/dashboard");
         }
         catch (GraphQlRequestException ex)
         {
@@ -62,6 +62,15 @@
             isSubmitting = false;
         }
     }
+
+    // Only a same-app relative path is a safe redirect target - "/dashboard" is fine, but
+    // "//evil.example.com" or "https://evil.example.com" (both accepted as-is by
+    // NavigationManager.NavigateTo) would send an authenticated user off-site.
+    private static bool IsSafeLocalReturnUrl(string? returnUrl) =>
+        returnUrl is { Length: > 1 }
+        && returnUrl[0] == '/'
+        && returnUrl[1] != '/'
+        && returnUrl[1] != '\\';
 
     private class LoginModel
     {
